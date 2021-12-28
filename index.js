@@ -8,7 +8,7 @@ const { randomIntFromInterval } = require('./lib/tools');
 
 const port = 1995;
 const DAYS = 365;
-const DAY_DURATION = 200;
+const DAY_DURATION = 400;
 
 let currentTime = Date.now();
 let currentDay = 0;
@@ -101,7 +101,10 @@ app.post('/field/sow', (req, res) => {
     if (user.warehouse.seeds[seed.type] < field.size)
         return res.json({ error: 'Не хватает семян' });
 
-    entities.fields[req.body.id].crop = new Wheat();
+    switch (seed.type) {
+        case "wheat": entities.fields[req.body.id].crop = new Wheat(); break;
+        case "barley": entities.fields[req.body.id].crop = new Barley(); break;
+    }
     user.warehouse.seeds[seed.type] -= field.size;
 });
 
