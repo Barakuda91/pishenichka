@@ -26,10 +26,10 @@ let weather = new Weather();
 // ИМПРОВИЗИРОВАНАЯ БАЗА
 const entities = {
     fields: [ // доступные поля для аренды/покупки
-        { size: 19, isFree: true, rentPrice: 1805, salePrice: 13262, owner: null, status: null },
-        { size: 32, isFree: true, rentPrice: 3040, salePrice: 22336, owner: null, status: null },
-        { size: 59, isFree: true, rentPrice: 5605, salePrice: 41182, owner: null, status: null },
-        { size: 78, isFree: true, rentPrice: 7410, salePrice: 54444, owner: null, status: null }
+        { size: 19, isFree: true, rentPrice: 1805, salePrice: 13262, owner: null, status: null, filed: 0 },
+        { size: 32, isFree: true, rentPrice: 3040, salePrice: 22336, owner: null, status: null, filed: 0 },
+        { size: 59, isFree: true, rentPrice: 5605, salePrice: 41182, owner: null, status: null, filed: 0 },
+        { size: 78, isFree: true, rentPrice: 7410, salePrice: 54444, owner: null, status: null, filed: 0 }
     ],
     seeds: [
         { name: 'Пишеничка', type: 'wheat', salePrice: 150 },
@@ -97,15 +97,18 @@ app.post('/field/sow', (req, res) => {
     if (!seed)
         return res.json({ error: 'Не правильно указан тип семян' });
 
+    if (req.body.quantity > field.size)
+        req.body.quantity = field.size;
 
-    if (user.warehouse.seeds[seed.type] < field.size)
+    if (user.warehouse.seeds[seed.type] < req.body.quantity)
         return res.json({ error: 'Не хватает семян' });
 
     switch (seed.type) {
-        case "wheat": entities.fields[req.body.id].crop = new Wheat(); break;
-        case "barley": entities.fields[req.body.id].crop = new Barley(); break;
+        case "wheat": field.crop = new Wheat(); break;
+        case "barley": field.crop = new Barley(); break;
     }
-    user.warehouse.seeds[seed.type] -= field.size;
+    user.warehouse.seeds[seed.type] -= req.body.quantity;
+    field.filed = req.body.quantity;
 });
 
 app.post('/field/harvest', (req, res) => {
@@ -120,7 +123,7 @@ app.post('/field/harvest', (req, res) => {
     if (field.crop.period !== 'AGING')
         return res.json({ error: 'Урожай не созрел' });
 
-    user.warehouse.harvest[field.crop.seedType] += field.crop.currentHarvest * field.size;
+    user.warehouse.harvest[field.crop.seedType] += field.crop.currentHarvest * field.filed;
     field.crop = null;
 });
 

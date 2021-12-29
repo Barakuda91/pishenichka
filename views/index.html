@@ -175,11 +175,11 @@
                                     <li>
                                         Засеяно: <span class="fw-bold"> {{ field.crop ? field.crop.name : 'пусто' }}</span>
                                     </li>
-                                    <li>
+                                    <li v-show="field.crop" >
                                         Состояние роста: <span class="fw-bold">{{ field.crop ? field.crop.currentState.toFixed(0) : 0 }}%</span>
                                     </li>
-                                    <li>
-                                        Урожая: <span class="fw-bold">{{ field.crop ? (field.crop.currentHarvest * field.size).toFixed(0) : 0 }}</span>
+                                    <li v-show="field.crop" >
+                                        Урожая: <span class="fw-bold">{{ field.crop ? (field.crop.currentHarvest * field.filed).toFixed(0) : 0 }}</span>
                                     </li>
                                     <li v-show="!field.crop">
                                         <div class="input-group mb-3">
@@ -192,7 +192,7 @@
                                     </li>
                                 </ul>
 
-                                <a href="#" v-show="!field.crop" class="btn btn-primary btn-sm" v-on:click="sow_field(id, sow_field_type[id])">засеять</a>
+                                <a href="#" v-show="!field.crop" class="btn btn-primary btn-sm" v-on:click="sow_field(id, sow_field_type[id], sow_field_quantity[id])">засеять</a>
                                 <a href="#" v-show="field.crop && field.crop.period !== 'DIE'" class="btn btn-primary btn-sm" v-on:click="harvest_field(id)">собрать</a>
                                 <a href="#" v-show="field.crop && field.crop.period === 'DIE'" class="btn btn-primary btn-sm" v-on:click="clear_field(id)">очистить</a>
 
@@ -336,8 +336,8 @@
                 if (data.error) this.startErrorModal(data.error);
             },
 
-            sow_field: async function (id, seedType) {
-                const data = await postData('/field/sow', { id, seedType });
+            sow_field: async function (id, seedType, quantity) {
+                const data = await postData('/field/sow', { id, seedType, quantity });
                 console.log('data', data);
                 if (data.error) this.startErrorModal(data.error);
             },
