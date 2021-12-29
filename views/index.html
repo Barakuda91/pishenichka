@@ -24,7 +24,7 @@
         </div>
     </div>
     <div class="row">
-        <div class="col-sm-3">
+        <div class="col-sm-2">
             <ul class="list-unstyled mt-3 mb-4">
                 <li>
                     <button
@@ -56,7 +56,7 @@
                 </li>
             </ul>
         </div>
-        <div class="col-sm-6">
+        <div class="col-sm-7">
             <div v-show="additional_tab === 'warehouse'">
                 <div class="card text-center">
                     <div class="card-header">
@@ -188,6 +188,7 @@
                                                 <option value="barley">{{ _('barley')}}</option>
                                             </select>
                                             <input type="number" min="1" v-bind:max="field.size" v-model="sow_field_quantity[id]" class="form-control" placeholder="" aria-label="Example text with button addon" aria-describedby="button-addon1">
+                                            <span class="input-group-text">{{ user.warehouse.seeds[sow_field_type[id]] }}</span>
                                         </div>
                                     </li>
                                 </ul>
