@@ -173,12 +173,12 @@
                                 <h5 class="card-title">{{ field.size }}га <span v-if="field.crop"> [ {{ field.crop.currentStateText }} ]</span></h5>
                                 <ul class="list-unstyled mt-3 mb-4">
                                     <li>
-                                        Засеяно: <span class="fw-bold"> {{ field.crop ? field.crop.name : 'пусто' }}</span>
+                                        Засеяно: <span class="fw-bold"> {{ field.crop ? field.crop.name : 'пусто' }}</span> <span v-show="field.crop">/ {{ field.filed }}га</span>
                                     </li>
-                                    <li v-show="field.crop" >
+                                    <li v-show="field.crop">
                                         Состояние роста: <span class="fw-bold">{{ field.crop ? field.crop.currentState.toFixed(0) : 0 }}%</span>
                                     </li>
-                                    <li v-show="field.crop" >
+                                    <li v-show="field.crop">
                                         Урожая: <span class="fw-bold">{{ field.crop ? (field.crop.currentHarvest * field.filed).toFixed(0) : 0 }}</span>
                                     </li>
                                     <li v-show="!field.crop">
