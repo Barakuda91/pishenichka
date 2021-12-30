@@ -86,12 +86,15 @@
                     </div>
 
                     <div class="card-body" v-show="additional_warehouse_tab === 'harvest'">
-                        <div v-for="(quantity, seedType) in user.warehouse.harvest">
+                        <div v-for="(quantity, harvestType) in user.warehouse.harvest">
                             <div class="row">
-                                <div class="col-sm-4">{{ _(seedType) }}</div>
+                                <div class="col-sm-4">{{ _(harvestType) }}</div>
                                 <div class="col-sm-4">{{ quantity.toFixed(0) }}</div>
                                 <div class="col-sm-4">
-                                    <button class="btn btn-sm btn-success mb-1" @click="sell_harvest(seedType);">продать</button>
+                                    <div class="input-group mb-3">
+                                        <input type="number" min="0" v-bind:max="quantity" v-model="sell_harvest_quantity[harvestType]" class="form-control btn-sm ">
+                                        <button class="btn btn-sm btn-success mb-1" @click="sell_harvest(harvestType, sell_harvest_quantity[harvestType]);">продать</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -135,7 +138,7 @@
                                     <input class="form-control form-control-sm" v-model="seeds_shop[index]" type="number" min="1" value="1" name="cols">
                                 </div>
                                 <div class="col-sm-4">
-                                    <button class="btn btn-sm btn-success mb-1" @click="buy_seeds(seed.type, seeds_shop[index]); seeds_shop[index] = null">купить {{ seeds_shop[index] ? seed.salePrice * seeds_shop[index] : 0}} </button>
+                                    <button class="btn btn-sm btn-success mb-1" @click="buy_seeds(seed.type, seeds_shop[index]); seeds_shop[index] = null">купить {{ seeds_shop[index] ? $(seed.salePrice * seeds_shop[index]) : 0}} </button>
                                 </div>
                             </div>
                         </div>
@@ -146,10 +149,10 @@
                             <div class="row" v-show="!item.owner">
                                 <div class="col-sm-3">размер {{ item.size }}</div>
                                 <div class="col-sm-5">
-                                    <button class="btn btn-sm btn-success mb-1" v-on:click="rent_field(index)">арендовать {{ item.rentPrice }} / год </button>
+                                    <button class="btn btn-sm btn-success mb-1" @click="rent_field(index)">арендовать {{ $(item.rentPrice) }} / год </button>
                                 </div>
                                 <div class="col-sm-4">
-                                    <button class="btn btn-sm btn-success mb-1">купить {{ item.salePrice }} </button>
+                                    <button class="btn btn-sm btn-success mb-1" @click="buy_field(index)">купить {{ $(item.salePrice) }} </button>
                                 </div>
                             </div>
                         </div>
@@ -197,7 +200,7 @@
                                 <a href="#" v-show="field.crop && field.crop.period !== 'DIE'" class="btn btn-primary btn-sm" v-on:click="harvest_field(id)">собрать</a>
                                 <a href="#" v-show="field.crop && field.crop.period === 'DIE'" class="btn btn-primary btn-sm" v-on:click="clear_field(id)">очистить</a>
 
-                                <a href="#" v-show="field.status === 'buy'" class="btn btn-primary btn-sm" v-on:click="sell_field(id)">продать</a>
+                                <a href="#" v-show="field.status === 'bought'" class="btn btn-primary btn-sm" v-on:click="sell_field(id)">продать</a>
                                 <a href="#" v-show="field.status === 'rent'" class="btn btn-primary btn-sm" v-on:click="unrent_field(id)">вернуть</a>
                             </div>
                         </div>
@@ -232,6 +235,9 @@
     <!--            </div>-->
     <!--        </div>-->
 
+    <div class="alert alert-success" role="alert" v-show="infoModalText">
+        {{ infoModalText }}
+    </div>
     <div class="alert alert-danger" role="alert" v-show="errorText">
         {{ errorText }}
     </div>
@@ -255,7 +261,11 @@
             referrerPolicy: 'no-referrer', // no-referrer, *client
             body: JSON.stringify(data) // body data type must match "Content-Type" header
         });
-        return await response.json(); // parses JSON response into native JavaScript objects
+        const resData = await response.json(); // parses JSON response into native JavaScript objects
+
+        if (resData.text) app.startInfoModal(resData.text);
+
+        return resData;
     }
     async function update() {
         const data = await postData('/get_update');
@@ -267,9 +277,10 @@
         this.balance = data.balance;
         this.entities = data.entities;
         this.user = data.user;
+        this.priceFactor = data.priceFactor;
     }
 
-    new Vue({
+    const app = new Vue({
         el: '#app',
         data: {
             additional_tab: 'fields',
@@ -278,12 +289,15 @@
             seeds_shop: {},
             sow_field_type: [],
             sow_field_quantity: [],
+            sell_harvest_quantity: [],
             errorTitle: 'ОШИБКА',
             errorText: null,
+            infoModalText: null,
             day: null,
             year: null,
             temp: null,
             balance: 0,
+            priceFactor: 0,
             entities: {},
             user: { warehouse: { seeds: {}, harvest: {}} },
             showModal: true,
@@ -304,6 +318,9 @@
                 };
                 return lang[text];
             },
+            $: function(price) {
+                return (price * this.priceFactor).toFixed(0);
+            },
             update,
             update_fields_values: function () {
                 this.entities.fields.forEach((field, id) => {
@@ -312,6 +329,10 @@
                         this.sow_field_type[id] = 'wheat';
                     }
                 });
+            },
+            startInfoModal: function (text) {
+                this.infoModalText = text;
+                setTimeout(() => { this.infoModalText = null; },3000)
             },
             startErrorModal: function (text) {
                 this.errorText = text;
@@ -361,8 +382,8 @@
                 if (data.error) this.startErrorModal(data.error);
             },
 
-            sell_harvest: async function (harvestType) {
-                const data = await postData('/harvest/sell', { harvestType });
+            sell_harvest: async function (harvestType, quantity) {
+                const data = await postData('/harvest/sell', { harvestType, quantity });
                 console.log('data', data);
                 if (data.error) this.startErrorModal(data.error);
             },
