@@ -145,14 +145,39 @@
                     </div>
 
                     <div class="card-body" v-show="additional_shop_tab === 'fields'">
+                        <div class="row">
+
+                            <div class="col-sm-1 text-small">размер</div>
+                            <div class="col-sm-7 text-small">
+                                <div class="row">
+                                    <div class="col-sm-2">гараж</div>
+                                    <div class="col-sm-2">элеватор</div>
+                                    <div class="col-sm-2">полив</div>
+                                    <div class="col-sm-3">сборщик</div>
+                                    <div class="col-sm-3">удобритель</div>
+                                </div>
+                            </div>
+
+                            <div class="col-sm-2 text-small">аренда</div>
+                            <div class="col-sm-2 text-small">покупка</div>
+                        </div>
                         <div v-for="(item, index) in entities.fields">
                             <div class="row" v-show="!item.owner">
-                                <div class="col-sm-3">размер {{ item.size }}</div>
-                                <div class="col-sm-5">
-                                    <button class="btn btn-sm btn-success mb-1" @click="rent_field(index)">арендовать {{ $(item.rentPrice) }} / год </button>
+                                <div class="col-sm-1"> {{ item.size }} </div>
+                                <div class="col-sm-7 text-small">
+                                    <div class="row">
+                                        <div class="col-sm-2">{{ $(item.buildings.garage.lv) }}</div>
+                                        <div class="col-sm-2">{{ $(item.buildings.elevator.lv) }}</div>
+                                        <div class="col-sm-2">{{ $(item.buildings.irrigationComplex.lv) }}</div>
+                                        <div class="col-sm-3">{{ $(item.buildings.assembler.lv) }}</div>
+                                        <div class="col-sm-3">{{ $(item.buildings.emitter.lv) }}</div>
+                                    </div>
                                 </div>
-                                <div class="col-sm-4">
-                                    <button class="btn btn-sm btn-success mb-1" @click="buy_field(index)">купить {{ $(item.salePrice) }} </button>
+                                <div class="col-sm-2">
+                                    <button class="btn btn-sm btn-success mb-1" @click="rent_field(index)"> {{ $(item.rentPrice) }} </button>
+                                </div>
+                                <div class="col-sm-2">
+                                    <button class="btn btn-sm btn-success mb-1" @click="buy_field(index)"> {{ $(item.salePrice) }} </button>
                                 </div>
                             </div>
                         </div>
@@ -174,7 +199,7 @@
                         <div class="card">
                             <div class="card-body">
                                 <h5 class="card-title">{{ field.size }}га <span v-if="field.crop"> [ {{ field.crop.currentStateText }} ]</span></h5>
-                                <p class="text-xl-start" style="font-size: x-small;">{{ field.establishedPrice.toFixed(0) }}/год </p>
+                                <p class="text-xl-start text-small">{{ field.establishedPrice.toFixed(0) }}/год </p>
                                     <div class="row">
                                         <div class="col-5">
                                             <ul class="list-unstyled mt-3 mb-4">
