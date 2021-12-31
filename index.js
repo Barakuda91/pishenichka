@@ -29,10 +29,10 @@ let economy = new Economy();
 // ИМПРОВИЗИРОВАНАЯ БАЗА
 const entities = {
     fields: [ // доступные поля для аренды/покупки
-        { size: 19, isFree: true, rentPrice: 1805, establishedPrice: null, salePrice: 13262, owner: null, status: null, filed: 0 },
-        { size: 32, isFree: true, rentPrice: 3040, establishedPrice: null, salePrice: 22336, owner: null, status: null, filed: 0 },
-        { size: 59, isFree: true, rentPrice: 5605, establishedPrice: null, salePrice: 41182, owner: null, status: null, filed: 0 },
-        { size: 78, isFree: true, rentPrice: 7410, establishedPrice: null, salePrice: 54444, owner: null, status: null, filed: 0 }
+        { buildings: { garage: { lv: 0 }, elevator: { lv: 0 }, irrigationComplex: { lv: 0 }, assembler: { lv: 0 }, emitter: { lv: 0 }}, size: 19, isFree: true, rentPrice: 4750, establishedPrice: null, salePrice: 199500, owner: null, status: null, filed: 0 },
+        { buildings: { garage: { lv: 0 }, elevator: { lv: 0 }, irrigationComplex: { lv: 0 }, assembler: { lv: 0 }, emitter: { lv: 0 }}, size: 32, isFree: true, rentPrice: 8000, establishedPrice: null, salePrice: 336000, owner: null, status: null, filed: 0 },
+        { buildings: { garage: { lv: 0 }, elevator: { lv: 0 }, irrigationComplex: { lv: 0 }, assembler: { lv: 0 }, emitter: { lv: 0 }}, size: 59, isFree: true, rentPrice: 14750, establishedPrice: null, salePrice: 619500, owner: null, status: null, filed: 0 },
+        { buildings: { garage: { lv: 0 }, elevator: { lv: 0 }, irrigationComplex: { lv: 0 }, assembler: { lv: 0 }, emitter: { lv: 0 }}, size: 78, isFree: true, rentPrice: 19500, establishedPrice: null, salePrice: 819000, owner: null, status: null, filed: 0 }
     ],
     seeds: [
         { name: 'Пишеничка', type: 'wheat', salePrice: 200 },
