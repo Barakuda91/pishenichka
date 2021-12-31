@@ -92,6 +92,19 @@ app.get('/', (req, res) => {
     res.sendFile('views/index.html', { root: __dirname });
 });
 
+app.post('/get_field_factors', (req, res) => {
+    res.json({
+        code: 200,
+        data: {
+            fieldGarage: [0.08, 0.1, 0.13, 0.18, 0.25],
+            fieldElevator: [0.25, 0.36, 0.47, 0.58, 0.70],
+            fieldIrrigationComplex: [0.15, 0.26, 0.37, 0.48, 0.59],
+            fieldAssembler: [0.09, 0.12, 0.18, 0.22, 0.38],
+            fieldEmitter: [0.1, 0.21, 0.29, 0.35, 0.49],
+        }
+    });
+});
+
 app.post('/get_update', (req, res) => {
 
     res.json({
