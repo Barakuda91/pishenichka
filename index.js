@@ -1,5 +1,6 @@
 const Wheat = require('./lib/Wheat');
 const Barley = require('./lib/Barley');
+const Corn = require('./lib/Corn');
 const Weather = require('./lib/Weather');
 const Economy = require('./lib/Economy');
 const express = require('express');
@@ -35,8 +36,9 @@ const entities = {
         { buildings: { garage: { lv: 2 }, elevator: { lv: 3 }, irrigationComplex: { lv: 1 }, assembler: { lv: 1 }, emitter: { lv: 2 }}, size: 78, isFree: true, rentPrice: 19500, establishedPrice: null, salePrice: 819000, owner: null, status: null, filed: 0 }
     ],
     seeds: [
-        { name: 'Пишеничка', type: 'wheat', salePrice: 200 },
-        { name: 'Ячмень', type: 'barley', salePrice: 350 }
+        { name: 'Пишеничка', type: 'wheat', salePrice: 150 },
+        { name: 'Ячмень', type: 'barley', salePrice: 190 },
+        { name: 'Кукуруза', type: 'corn', salePrice: 190 }
     ]
 };
 
@@ -51,7 +53,7 @@ function textReceived(amount) { return `Получено на баланс ${amo
 const user = {
     _id: '7823-1231-412321-1231-3123',
     crops: {}, // посевы - тут идентификатор поля, статус
-    warehouse: { seeds: { wheat: 0, barley: 0 }, harvest: { wheat: 0, barley: 0 }}, // склады
+    warehouse: { seeds: { }, harvest: { }}, // склады
     balance: 100000
 };
 // КОНЕЦ БАЗЕ
@@ -137,6 +139,7 @@ app.post('/field/sow', (req, res) => {
     switch (seed.type) {
         case "wheat": field.crop = new Wheat(); break;
         case "barley": field.crop = new Barley(); break;
+        case "corn": field.crop = new Corn(); break;
     }
     user.warehouse.seeds[seed.type] -= req.body.quantity;
     field.filed = req.body.quantity;
@@ -154,6 +157,8 @@ app.post('/field/harvest', (req, res) => {
     if (field.crop.period !== 'AGING')
         return res.json({ error: 'Урожай не созрел' });
 
+    if (!user.warehouse.harvest[field.crop.seedType])
+        user.warehouse.harvest[field.crop.seedType] = 0;
     user.warehouse.harvest[field.crop.seedType] += field.crop.currentHarvest * field.filed;
     field.crop = null;
 });
@@ -197,6 +202,8 @@ app.post('/seeds/buy', (req, res) => {
         return res.json({ error: 'У вас не достаточно денег' });
 
     user.balance -= price;
+    if (!user.warehouse.seeds[req.body.seedType])
+        user.warehouse.seeds[req.body.seedType] = 0;
     user.warehouse.seeds[req.body.seedType] += req.body.quantity;
 
     res.json({ code: 200, text: textSpent(price) });
