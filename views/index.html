@@ -35,7 +35,7 @@
                 </li>
                 <li>
                     <button
-                            v-on:click="additional_tab = additional_tab === 'warehouse' ? null : 'warehouse'"
+                            v-on:click="additional_tab = additional_tab === 'warehouse' ? null : 'warehouse'; update_warehouse_values();"
                             v-bind:class="additional_tab === 'warehouse' ? 'btn-primary' : 'btn-outline-primary'"
                             class="btn btn-sm btn-outline-primary w-100 mb-1"
                     >склад</button>
@@ -86,12 +86,15 @@
                     </div>
 
                     <div class="card-body" v-show="additional_warehouse_tab === 'harvest'">
-                        <div v-for="(quantity, seedType) in user.warehouse.harvest">
+                        <div v-for="(quantity, harvestType) in user.warehouse.harvest">
                             <div class="row">
-                                <div class="col-sm-4">{{ _(seedType) }}</div>
-                                <div class="col-sm-4">{{ quantity.toFixed(0) }}</div>
-                                <div class="col-sm-4">
-                                    <button class="btn btn-sm btn-success mb-1" @click="sell_harvest(seedType);">продать</button>
+                                <div class="col-sm-4">{{ _(harvestType) }}</div>
+                                <div class="col-sm-3">{{ quantity.toFixed(0) }}</div>
+                                <div class="col-sm-5">
+                                    <div class="input-group mb-3">
+                                        <input type="number" min="0" v-bind:max="quantity" v-model="sell_harvest_quantity[harvestType]" class="form-control btn-sm ">
+                                        <button class="btn btn-sm btn-success mb-1" @click="sell_harvest(harvestType, sell_harvest_quantity[harvestType]);">продать {{ (actualPrices[harvestType] * sell_harvest_quantity[harvestType]).toFixed(0) }}</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -135,21 +138,43 @@
                                     <input class="form-control form-control-sm" v-model="seeds_shop[index]" type="number" min="1" value="1" name="cols">
                                 </div>
                                 <div class="col-sm-4">
-                                    <button class="btn btn-sm btn-success mb-1" @click="buy_seeds(seed.type, seeds_shop[index]); seeds_shop[index] = null">купить {{ seeds_shop[index] ? seed.salePrice * seeds_shop[index] : 0}} </button>
+                                    <button class="btn btn-sm btn-success mb-1" @click="buy_seeds(seed.type, seeds_shop[index]); seeds_shop[index] = null">купить {{ seeds_shop[index] ? $(seed.salePrice * seeds_shop[index]) : 0}} </button>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <div class="card-body" v-show="additional_shop_tab === 'fields'">
+                        <div class="row">
+
+                            <div class="col-sm-1 text-small">размер</div>
+                            <div class="col-sm-7 text-small">
+                                <div class="row">
+                                    <div class="col-sm-2">гараж</div>
+                                    <div class="col-sm-2">элеватор</div>
+                                    <div class="col-sm-2">полив</div>
+                                    <div class="col-sm-3">сборщик</div>
+                                    <div class="col-sm-3">удобритель</div>
+                                </div>
+                            </div>
+
+                            <div class="col-sm-2 text-small">аренда</div>
+                            <div class="col-sm-2 text-small">покупка</div>
+                        </div>
                         <div v-for="(item, index) in entities.fields">
                             <div class="row" v-show="!item.owner">
-                                <div class="col-sm-3">размер {{ item.size }}</div>
-                                <div class="col-sm-5">
-                                    <button class="btn btn-sm btn-success mb-1" v-on:click="rent_field(index)">арендовать {{ item.rentPrice }} / год </button>
+                                <div class="col-sm-1"> {{ item.size }} </div>
+                                <div class="col-sm-7 text-small">
+                                    <div class="row">
+                                        <div class="col-sm-2">{{ $(item.buildings.garage.lv) }}</div>
+                                        <div class="col-sm-2">{{ $(item.buildings.elevator.lv) }}</div>
+                                        <div class="col-sm-2">{{ $(item.buildings.irrigationComplex.lv) }}</div>
+                                        <div class="col-sm-3">{{ $(item.buildings.assembler.lv) }}</div>
+                                        <div class="col-sm-3">{{ $(item.buildings.emitter.lv) }}</div>
+                                    </div>
                                 </div>
-                                <div class="col-sm-4">
-                                    <button class="btn btn-sm btn-success mb-1">купить {{ item.salePrice }} </button>
+                                <div class="col-sm-2">
+                                    <button class="btn btn-sm btn-success mb-1" @click="rent_field(index)"> {{ $(item.rentPrice) }} </button>
                                 </div>
                             </div>
                         </div>
@@ -167,39 +192,59 @@
 
             <div v-show="additional_tab === 'fields'">
                 <div class="row">
-                    <div v-for="(field, id) in entities.fields" class="col-sm-6" v-if="field.owner === user._id">
+                    <div v-for="(field, id) in entities.fields" class="col-sm-12" v-if="field.owner === user._id">
                         <div class="card">
                             <div class="card-body">
                                 <h5 class="card-title">{{ field.size }}га <span v-if="field.crop"> [ {{ field.crop.currentStateText }} ]</span></h5>
-                                <ul class="list-unstyled mt-3 mb-4">
-                                    <li>
-                                        Засеяно: <span class="fw-bold"> {{ field.crop ? field.crop.name : 'пусто' }}</span> <span v-show="field.crop">/ {{ field.filed }}га</span>
-                                    </li>
-                                    <li v-show="field.crop">
-                                        Состояние роста: <span class="fw-bold">{{ field.crop ? field.crop.currentState.toFixed(0) : 0 }}%</span>
-                                    </li>
-                                    <li v-show="field.crop">
-                                        Урожая: <span class="fw-bold">{{ field.crop ? (field.crop.currentHarvest * field.filed).toFixed(0) : 0 }}</span>
-                                    </li>
-                                    <li v-show="!field.crop">
-                                        <div class="input-group mb-3">
-                                            <select class="form-select" aria-label="Default select example" v-model="sow_field_type[id]" class="dropdown-menu" style="width: 115px;">
-                                                <option value="wheat">{{ _('wheat')}}</option>
-                                                <option value="barley">{{ _('barley')}}</option>
-                                                <option value="corn">{{ _('corn')}}</option>
-                                            </select>
-                                            <input type="number" min="1" v-bind:max="field.size" v-model="sow_field_quantity[id]" class="form-control" placeholder="" aria-label="Example text with button addon" aria-describedby="button-addon1">
-                                            <span class="input-group-text">{{ user.warehouse.seeds[sow_field_type[id]] }}</span>
-                                        </div>
-                                    </li>
-                                </ul>
+                                <p class="text-xl-start text-small">{{ field.establishedPrice.toFixed(0) }}/год </p>
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <ul class="list-unstyled mt-3 mb-4">
+                                                <li>
+                                                    Засеяно: <span class="fw-bold"> {{ field.crop ? field.crop.name : 'пусто' }}</span> <span v-show="field.crop">/ {{ field.filed }}га</span>
+                                                </li>
+                                                <li v-show="field.crop">
+                                                    Состояние роста: <span class="fw-bold">{{ field.crop ? field.crop.currentState.toFixed(0) : 0 }}%</span>
+                                                </li>
+                                                <li v-show="field.crop">
+                                                    Урожая: <span class="fw-bold">{{ field.crop ? (field.crop.currentHarvest * field.filed).toFixed(0) : 0 }}</span>
+                                                </li>
+                                                <li v-show="!field.crop">
+                                                    <div class="input-group mb-3">
+                                                        <select class="form-select" aria-label="Default select example" v-model="sow_field_type[id]" class="dropdown-menu" style="width: 115px;">
+                                                            <option value="wheat">{{ _('wheat')}}</option>
+                                                            <option value="barley">{{ _('barley')}}</option>
+                                                            <option value="corn">{{ _('corn')}}</option>
+                                                        </select>
+                                                        <input type="number" min="1" v-bind:max="field.size" v-model="sow_field_quantity[id]" class="form-control" placeholder="" aria-label="Example text with button addon" aria-describedby="button-addon1">
+                                                        <span class="input-group-text">{{ user.warehouse.seeds[sow_field_type[id]] }}</span>
+                                                    </div>
+                                                </li>
+                                            </ul>
 
-                                <a href="#" v-show="!field.crop" class="btn btn-primary btn-sm" v-on:click="sow_field(id, sow_field_type[id], sow_field_quantity[id])">засеять</a>
-                                <a href="#" v-show="field.crop && field.crop.period !== 'DIE'" class="btn btn-primary btn-sm" v-on:click="harvest_field(id)">собрать</a>
-                                <a href="#" v-show="field.crop && field.crop.period === 'DIE'" class="btn btn-primary btn-sm" v-on:click="clear_field(id)">очистить</a>
+                                            <a href="#" v-show="!field.crop" class="btn btn-primary btn-sm" v-on:click="sow_field(id, sow_field_type[id], sow_field_quantity[id])">засеять</a>
+                                            <a href="#" v-show="field.crop && field.crop.period !== 'DIE'" class="btn btn-primary btn-sm" v-on:click="harvest_field(id)">собрать</a>
+                                            <a href="#" v-show="field.crop && field.crop.period === 'DIE'" class="btn btn-primary btn-sm" v-on:click="clear_field(id)">очистить</a>
 
-                                <a href="#" v-show="field.status === 'buy'" class="btn btn-primary btn-sm" v-on:click="sell_field(id)">продать</a>
-                                <a href="#" v-show="field.status === 'rent'" class="btn btn-primary btn-sm" v-on:click="unrent_field(id)">вернуть</a>
+                                            <a href="#" v-show="field.status === 'bought'" class="btn btn-primary btn-sm" v-on:click="sell_field(id)">продать</a>
+                                            <a href="#" v-show="field.status === 'rent'" class="btn btn-primary btn-sm" v-on:click="unrent_field(id)">вернуть</a>
+                                    </div>
+
+                                    <div class="col-4">
+                                        <div>Стоянка техники (lv{{ field.buildings.garage.lv }})</div>
+                                        <div>Элеватор (lv{{ field.buildings.elevator.lv }})</div>
+                                        <div>Комплекс полива (lv{{ field.buildings.irrigationComplex.lv }})</div>
+                                        <div>Автосборщик (lv{{ field.buildings.assembler.lv }})</div>
+                                        <div>Автоудобритель (lv{{ field.buildings.emitter.lv }})</div>
+                                    </div>
+                                    <div class="col-3">
+                                        <button class="btn btn-primary btn-sm w-100 mb-1" v-bind:class="field.status === 'rent' ? 'disabled' : ''" v-on:click="build(id, 'garage')">Построить {{ $(fieldFactors.fieldGarage[0] * field.salePrice) }}</button>
+                                        <button class="btn btn-primary btn-sm w-100 mb-1" v-bind:class="field.status === 'rent' ? 'disabled' : ''" v-on:click="build(id, 'elevator')">Построить {{ $(fieldFactors.fieldElevator[0] * field.salePrice) }}</button>
+                                        <button class="btn btn-primary btn-sm w-100 mb-1" v-bind:class="field.status === 'rent' ? 'disabled' : ''" v-on:click="build(id, 'irrigationComplex')">Построить {{ $(fieldFactors.fieldIrrigationComplex[0] * field.salePrice) }}</button>
+                                        <button class="btn btn-primary btn-sm w-100 mb-1" v-bind:class="field.status === 'rent' ? 'disabled' : ''" v-on:click="build(id, 'assembler')">Построить {{ $(fieldFactors.fieldAssembler[0] * field.salePrice) }}</button>
+                                        <button class="btn btn-primary btn-sm w-100 mb-1" v-bind:class="field.status === 'rent' ? 'disabled' : ''" v-on:click="build(id, 'emitter')">Построить {{ $(fieldFactors.fieldEmitter[0] * field.salePrice) }}</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -233,6 +278,9 @@
     <!--            </div>-->
     <!--        </div>-->
 
+    <div class="alert alert-success" role="alert" v-show="infoModalText">
+        {{ infoModalText }}
+    </div>
     <div class="alert alert-danger" role="alert" v-show="errorText">
         {{ errorText }}
     </div>
@@ -256,7 +304,11 @@
             referrerPolicy: 'no-referrer', // no-referrer, *client
             body: JSON.stringify(data) // body data type must match "Content-Type" header
         });
-        return await response.json(); // parses JSON response into native JavaScript objects
+        const resData = await response.json(); // parses JSON response into native JavaScript objects
+
+        if (resData.text) app.startInfoModal(resData.text);
+
+        return resData;
     }
     async function update() {
         const data = await postData('/get_update');
@@ -268,9 +320,11 @@
         this.balance = data.balance;
         this.entities = data.entities;
         this.user = data.user;
+        this.priceFactor = data.priceFactor;
+        this.actualPrices = data.actualPrices;
     }
 
-    new Vue({
+    const app = new Vue({
         el: '#app',
         data: {
             additional_tab: 'fields',
@@ -279,20 +333,30 @@
             seeds_shop: {},
             sow_field_type: [],
             sow_field_quantity: [],
+            sell_harvest_quantity: [],
             errorTitle: 'ОШИБКА',
             errorText: null,
+            infoModalText: null,
             day: null,
             year: null,
             temp: null,
             balance: 0,
+            priceFactor: 0,
+            fieldsBuildingFactor: 0,
             entities: {},
             user: { warehouse: { seeds: {}, harvest: {}} },
             showModal: true,
+            fieldFactors: {},
+            actualPrices: {},
             plant: {}
         },
         async beforeMount(){
             await this.update();
             this.update_fields_values();
+            this.update_warehouse_values();
+            this.fieldFactors = (await postData('/get_field_factors')).data;
+
+
             setInterval(async () => {
                 this.update();
             }, 1000);
@@ -306,14 +370,28 @@
                 };
                 return lang[text];
             },
+            $: function(price) {
+                return (price * this.priceFactor).toFixed(0);
+            },
             update,
+            update_warehouse_values: function () {
+
+                for(const harvestType in this.user.warehouse.harvest) {
+                    this.sell_harvest_quantity[harvestType] = this.user.warehouse.harvest[harvestType].toFixed(0);
+                }
+
+            },
             update_fields_values: function () {
                 this.entities.fields.forEach((field, id) => {
                     if(field.owner === this.user._id) {
-                        this.sow_field_quantity[id] = field.size;
+                        this.sow_field_quantity[id] = this.user.warehouse.seeds['wheat'] > field.size ? field.size : this.user.warehouse.seeds['wheat'].toFixed(0);
                         this.sow_field_type[id] = 'wheat';
                     }
                 });
+            },
+            startInfoModal: function (text) {
+                this.infoModalText = text;
+                setTimeout(() => { this.infoModalText = null; },3000)
             },
             startErrorModal: function (text) {
                 this.errorText = text;
@@ -363,8 +441,8 @@
                 if (data.error) this.startErrorModal(data.error);
             },
 
-            sell_harvest: async function (harvestType) {
-                const data = await postData('/harvest/sell', { harvestType });
+            sell_harvest: async function (harvestType, quantity) {
+                const data = await postData('/harvest/sell', { harvestType, quantity });
                 console.log('data', data);
                 if (data.error) this.startErrorModal(data.error);
             },
