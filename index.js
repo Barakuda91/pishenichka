@@ -1,5 +1,6 @@
 const Wheat = require('./lib/Wheat');
 const Barley = require('./lib/Barley');
+const Corn = require('./lib/Corn');
 const Weather = require('./lib/Weather');
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -33,14 +34,15 @@ const entities = {
     ],
     seeds: [
         { name: 'Пишеничка', type: 'wheat', salePrice: 150 },
-        { name: 'Ячменё', type: 'barley', salePrice: 190 }
+        { name: 'Ячменё', type: 'barley', salePrice: 190 },
+        { name: 'Кукуруза', type: 'corn', salePrice: 190 }
     ]
 };
 
 const user = {
     _id: '7823-1231-412321-1231-3123',
     crops: {}, // посевы - тут идентификатор поля, статус
-    warehouse: { seeds: { wheat: 0, barley: 0 }, harvest: { wheat: 0, barley: 0 }}, // склады
+    warehouse: { seeds: { }, harvest: { }}, // склады
     balance: 10000
 };
 // КОНЕЦ БАЗЕ
@@ -106,6 +108,7 @@ app.post('/field/sow', (req, res) => {
     switch (seed.type) {
         case "wheat": field.crop = new Wheat(); break;
         case "barley": field.crop = new Barley(); break;
+        case "corn": field.crop = new Corn(); break;
     }
     user.warehouse.seeds[seed.type] -= req.body.quantity;
     field.filed = req.body.quantity;
@@ -123,6 +126,8 @@ app.post('/field/harvest', (req, res) => {
     if (field.crop.period !== 'AGING')
         return res.json({ error: 'Урожай не созрел' });
 
+    if (!user.warehouse.harvest[field.crop.seedType])
+        user.warehouse.harvest[field.crop.seedType] = 0;
     user.warehouse.harvest[field.crop.seedType] += field.crop.currentHarvest * field.filed;
     field.crop = null;
 });
@@ -163,6 +168,8 @@ app.post('/seeds/buy', (req, res) => {
         return res.json({ error: 'У вас не достаточно денег' });
 
     user.balance -= seed.salePrice * req.body.quantity;
+    if (!user.warehouse.seeds[req.body.seedType])
+        user.warehouse.seeds[req.body.seedType] = 0;
     user.warehouse.seeds[req.body.seedType] += req.body.quantity;
 
     res.json({ code: 200 });

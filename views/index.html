@@ -186,6 +186,7 @@
                                             <select class="form-select" aria-label="Default select example" v-model="sow_field_type[id]" class="dropdown-menu" style="width: 115px;">
                                                 <option value="wheat">{{ _('wheat')}}</option>
                                                 <option value="barley">{{ _('barley')}}</option>
+                                                <option value="corn">{{ _('corn')}}</option>
                                             </select>
                                             <input type="number" min="1" v-bind:max="field.size" v-model="sow_field_quantity[id]" class="form-control" placeholder="" aria-label="Example text with button addon" aria-describedby="button-addon1">
                                             <span class="input-group-text">{{ user.warehouse.seeds[sow_field_type[id]] }}</span>
@@ -300,7 +301,8 @@
             _: function(text) {
                 const lang = {
                     wheat: 'пишеничка',
-                    barley: 'ячмень'
+                    barley: 'ячмень',
+                    corn: 'кукуруза'
                 };
                 return lang[text];
             },
