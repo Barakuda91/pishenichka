@@ -196,7 +196,7 @@
                         <div class="card">
                             <div class="card-body">
                                 <h5 class="card-title">{{ field.size }}га <span v-if="field.crop"> [ {{ field.crop.currentStateText }} ]</span></h5>
-                                <p class="text-xl-start text-small">{{ field.establishedPrice.toFixed(0) }}/год </p>
+                                <p class="text-xl-start text-small" v-if="field.establishedPrice">{{ field.establishedPrice.toFixed(0) }}/год </p>
                                     <div class="row">
                                         <div class="col-5">
                                             <ul class="list-unstyled mt-3 mb-4">
