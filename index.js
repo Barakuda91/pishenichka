@@ -44,8 +44,10 @@ const entities = {
 
 const actualPrices = {
     wheat_seed: economy.getPriceFactor(entities.seeds.find((el) => el.type === 'wheat').salePrice),
+    corn_seed: economy.getPriceFactor(entities.seeds.find((el) => el.type === 'corn').salePrice),
     barley_seed: economy.getPriceFactor(entities.seeds.find((el) => el.type === 'barley').salePrice),
     wheat: economy.getPriceFactor(entities.seeds.find((el) => el.type === 'wheat').salePrice / HARVEST_PRICE_FACTOR),
+    corn: economy.getPriceFactor(entities.seeds.find((el) => el.type === 'corn').salePrice / HARVEST_PRICE_FACTOR),
     barley: economy.getPriceFactor(entities.seeds.find((el) => el.type === 'barley').salePrice / HARVEST_PRICE_FACTOR)
 };
 function textSpent(amount) { return `Списано с баланса ${amount.toFixed(0)}` }
@@ -89,6 +91,10 @@ const action = async () => {
 };
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.use(express.static('views/public'));
+app.use(express.static('node_modules/bootstrap/dist'));
+app.use(express.static('node_modules/bootstrap-vue/dist'));
+app.use(express.static('node_modules/vue/dist'));
 app.use(express.static('views/public'));
 app.get('/', (req, res) => {
     res.sendFile('views/index.html', { root: __dirname });

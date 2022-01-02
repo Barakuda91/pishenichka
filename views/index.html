@@ -2,9 +2,10 @@
 <html>
 <head>
     <title>MY CALCULATOR</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+    <script src="/js/bootstrap.js"></script>
+    <script src="/vue.js"></script>
+    <link href="/css/bootstrap.css" rel="stylesheet">
+    <link href="/bootstrap-vue.css" rel="stylesheet">
     <link href="/style/style.css" rel="stylesheet">
 </head>
 <body>
@@ -176,6 +177,9 @@
                                 <div class="col-sm-2">
                                     <button class="btn btn-sm btn-success mb-1" @click="rent_field(index)"> {{ $(item.rentPrice) }} </button>
                                 </div>
+                                <div class="col-sm-2">
+                                    <button class="btn btn-sm btn-success mb-1" @click="buy_field(index)"> {{ $(item.salePrice) }} </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -197,37 +201,37 @@
                             <div class="card-body">
                                 <h5 class="card-title">{{ field.size }}га <span v-if="field.crop"> [ {{ field.crop.currentStateText }} ]</span></h5>
                                 <p class="text-xl-start text-small" v-if="field.establishedPrice">{{ field.establishedPrice.toFixed(0) }}/год </p>
-                                    <div class="row">
-                                        <div class="col-5">
-                                            <ul class="list-unstyled mt-3 mb-4">
-                                                <li>
-                                                    Засеяно: <span class="fw-bold"> {{ field.crop ? field.crop.name : 'пусто' }}</span> <span v-show="field.crop">/ {{ field.filed }}га</span>
-                                                </li>
-                                                <li v-show="field.crop">
-                                                    Состояние роста: <span class="fw-bold">{{ field.crop ? field.crop.currentState.toFixed(0) : 0 }}%</span>
-                                                </li>
-                                                <li v-show="field.crop">
-                                                    Урожая: <span class="fw-bold">{{ field.crop ? (field.crop.currentHarvest * field.filed).toFixed(0) : 0 }}</span>
-                                                </li>
-                                                <li v-show="!field.crop">
-                                                    <div class="input-group mb-3">
-                                                        <select class="form-select" aria-label="Default select example" v-model="sow_field_type[id]" class="dropdown-menu" style="width: 115px;">
-                                                            <option value="wheat">{{ _('wheat')}}</option>
-                                                            <option value="barley">{{ _('barley')}}</option>
-                                                            <option value="corn">{{ _('corn')}}</option>
-                                                        </select>
-                                                        <input type="number" min="1" v-bind:max="field.size" v-model="sow_field_quantity[id]" class="form-control" placeholder="" aria-label="Example text with button addon" aria-describedby="button-addon1">
-                                                        <span class="input-group-text">{{ user.warehouse.seeds[sow_field_type[id]] }}</span>
-                                                    </div>
-                                                </li>
-                                            </ul>
+                                <div class="row">
+                                    <div class="col-5">
+                                        <ul class="list-unstyled mt-3 mb-4">
+                                            <li>
+                                                Засеяно: <span class="fw-bold"> {{ field.crop ? field.crop.name : 'пусто' }}</span> <span v-show="field.crop"> / {{ field.filed }}га</span>
+                                            </li>
+                                            <li v-show="field.crop">
+                                                Состояние роста: <span class="fw-bold">{{ field.crop ? field.crop.currentState.toFixed(0) : 0 }}%</span>
+                                            </li>
+                                            <li v-show="field.crop">
+                                                Урожая: <span class="fw-bold">{{ field.crop ? (field.crop.currentHarvest * field.filed).toFixed(0) : 0 }}</span>
+                                            </li>
+                                            <li v-show="!field.crop">
+                                                <div class="input-group mb-3">
+                                                    <select class="form-select" aria-label="Default select example" v-model="sow_field_type[id]" class="dropdown-menu" style="width: 115px;">
+                                                        <option value="wheat" selected="selected">{{ _('wheat')}}</option>
+                                                        <option value="barley">{{ _('barley')}}</option>
+                                                        <option value="corn">{{ _('corn')}}</option>
+                                                    </select>
+                                                    <input type="number" min="1" v-bind:max="field.size" v-model="sow_field_quantity[id]" class="form-control" placeholder="" aria-label="Example text with button addon" aria-describedby="button-addon1">
+                                                    <span class="input-group-text">{{ user.warehouse.seeds[sow_field_type[id]] || 0 }}</span>
+                                                </div>
+                                            </li>
+                                        </ul>
 
-                                            <a href="#" v-show="!field.crop" class="btn btn-primary btn-sm" v-on:click="sow_field(id, sow_field_type[id], sow_field_quantity[id])">засеять</a>
-                                            <a href="#" v-show="field.crop && field.crop.period !== 'DIE'" class="btn btn-primary btn-sm" v-on:click="harvest_field(id)">собрать</a>
-                                            <a href="#" v-show="field.crop && field.crop.period === 'DIE'" class="btn btn-primary btn-sm" v-on:click="clear_field(id)">очистить</a>
+                                        <a href="#" v-show="!field.crop" class="btn btn-primary btn-sm" v-on:click="sow_field(id, sow_field_type[id], sow_field_quantity[id])">засеять</a>
+                                        <a href="#" v-show="field.crop && field.crop.period !== 'DIE'" class="btn btn-primary btn-sm" v-on:click="harvest_field(id)">собрать</a>
+                                        <a href="#" v-show="field.crop && field.crop.period === 'DIE'" class="btn btn-primary btn-sm" v-on:click="clear_field(id)">очистить</a>
 
-                                            <a href="#" v-show="field.status === 'bought'" class="btn btn-primary btn-sm" v-on:click="sell_field(id)">продать</a>
-                                            <a href="#" v-show="field.status === 'rent'" class="btn btn-primary btn-sm" v-on:click="unrent_field(id)">вернуть</a>
+                                        <a href="#" v-show="field.status === 'bought'" class="btn btn-primary btn-sm" v-on:click="sell_field(id)">продать</a>
+                                        <a href="#" v-show="field.status === 'rent'" class="btn btn-primary btn-sm" v-on:click="unrent_field(id)">вернуть</a>
                                     </div>
 
                                     <div class="col-4">
@@ -351,10 +355,10 @@
             plant: {}
         },
         async beforeMount(){
+            this.fieldFactors = (await postData('/get_field_factors')).data;
             await this.update();
             this.update_fields_values();
             this.update_warehouse_values();
-            this.fieldFactors = (await postData('/get_field_factors')).data;
 
 
             setInterval(async () => {
@@ -377,14 +381,18 @@
             update_warehouse_values: function () {
 
                 for(const harvestType in this.user.warehouse.harvest) {
-                    this.sell_harvest_quantity[harvestType] = this.user.warehouse.harvest[harvestType].toFixed(0);
+                    this.sell_harvest_quantity[harvestType] = this.user.warehouse.harvest[harvestType]
+                        ? this.user.warehouse.harvest[harvestType].toFixed(0)
+                        : 0;
                 }
 
             },
             update_fields_values: function () {
                 this.entities.fields.forEach((field, id) => {
                     if(field.owner === this.user._id) {
-                        this.sow_field_quantity[id] = this.user.warehouse.seeds['wheat'] > field.size ? field.size : this.user.warehouse.seeds['wheat'].toFixed(0);
+                        this.sow_field_quantity[id] = this.user.warehouse.seeds['wheat']
+                            ? this.user.warehouse.seeds['wheat'] > field.size ? field.size : this.user.warehouse.seeds['wheat'].toFixed(0)
+                            : 0;
                         this.sow_field_type[id] = 'wheat';
                     }
                 });
