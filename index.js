@@ -1,8 +1,14 @@
-const Wheat = require('./lib/Wheat');
-const Barley = require('./lib/Barley');
-const Corn = require('./lib/Corn');
-const Weather = require('./lib/Weather');
-const Economy = require('./lib/Economy');
+const Weather = require('./lib/entities/world/Weather');
+const Economy = require('./lib/entities/world/Economy');
+
+const DB = require('./lib/DB');
+
+const Plant = require('./lib/entities/Plant');
+
+const fieldRouter = require('./routers/field');
+const harvestRouter = require('./routers/harvest');
+const seedsRouter = require('./routers/seeds');
+
 const express = require('express');
 const bodyParser = require('body-parser');
 
@@ -10,6 +16,7 @@ const { randomIntFromInterval } = require('./lib/tools');
 
 const port = 1995;
 const DAYS = 365;
+const ECONOMY_PERIOD = 7;
 const DAY_DURATION = 400;
 const HARVEST_PRICE_FACTOR = 712;
 
@@ -20,6 +27,7 @@ let currentYear = 2001;
 const app = express();
 let weather = new Weather();
 let economy = new Economy();
+const db = new DB();
 
 // Должен быть класс поля, которым мы будем засеивать
 // Реализуем статистику за день, типо кто за игровой год больше урожая собрал
@@ -28,54 +36,48 @@ let economy = new Economy();
 // тоже самое с техникой
 
 // ИМПРОВИЗИРОВАНАЯ БАЗА
-const entities = {
-    fields: [ // доступные поля для аренды/покупки
-        { buildings: { garage: { lv: 0 }, elevator: { lv: 0 }, irrigationComplex: { lv: 0 }, assembler: { lv: 0 }, emitter: { lv: 0 }}, size: 19, isFree: true, rentPrice: 4750, establishedPrice: null, salePrice: 199500, owner: null, status: null, filed: 0 },
-        { buildings: { garage: { lv: 0 }, elevator: { lv: 3 }, irrigationComplex: { lv: 2 }, assembler: { lv: 0 }, emitter: { lv: 3 }}, size: 32, isFree: true, rentPrice: 8000, establishedPrice: null, salePrice: 336000, owner: null, status: null, filed: 0 },
-        { buildings: { garage: { lv: 0 }, elevator: { lv: 0 }, irrigationComplex: { lv: 0 }, assembler: { lv: 0 }, emitter: { lv: 0 }}, size: 59, isFree: true, rentPrice: 14750, establishedPrice: null, salePrice: 619500, owner: null, status: null, filed: 0 },
-        { buildings: { garage: { lv: 2 }, elevator: { lv: 3 }, irrigationComplex: { lv: 1 }, assembler: { lv: 1 }, emitter: { lv: 2 }}, size: 78, isFree: true, rentPrice: 19500, establishedPrice: null, salePrice: 819000, owner: null, status: null, filed: 0 }
-    ],
-    seeds: [
-        { name: 'Пишеничка', type: 'wheat', salePrice: 150 },
-        { name: 'Ячмень', type: 'barley', salePrice: 190 },
-        { name: 'Кукуруза', type: 'corn', salePrice: 190 }
-    ]
-};
 
-const actualPrices = {
-    wheat_seed: economy.getPriceFactor(entities.seeds.find((el) => el.type === 'wheat').salePrice),
-    corn_seed: economy.getPriceFactor(entities.seeds.find((el) => el.type === 'corn').salePrice),
-    barley_seed: economy.getPriceFactor(entities.seeds.find((el) => el.type === 'barley').salePrice),
-    wheat: economy.getPriceFactor(entities.seeds.find((el) => el.type === 'wheat').salePrice / HARVEST_PRICE_FACTOR),
-    corn: economy.getPriceFactor(entities.seeds.find((el) => el.type === 'corn').salePrice / HARVEST_PRICE_FACTOR),
-    barley: economy.getPriceFactor(entities.seeds.find((el) => el.type === 'barley').salePrice / HARVEST_PRICE_FACTOR)
-};
-function textSpent(amount) { return `Списано с баланса ${amount.toFixed(0)}` }
-function textReceived(amount) { return `Получено на баланс ${amount.toFixed(0)}` }
-const user = {
-    _id: '7823-1231-412321-1231-3123',
-    crops: {}, // посевы - тут идентификатор поля, статус
-    warehouse: { seeds: { }, harvest: { }}, // склады
-    balance: 100000
-};
 // КОНЕЦ БАЗЕ
 
 const action = async () => {
+
+    const seeds = await db.seeds.find({}).lean().exec();
+    const fields = await db.fields.find({}).lean().exec();
 
     if (Date.now() >= currentTime + (DAY_DURATION * currentDay)) {
         currentDay++;
         const temp = weather.getDayTemp(currentDay);
 
-        // console.log(`It is ${currentDay} day of ${currentYear} year. Temp ${temp} C`);
+        for (const id in fields) {
+            if (fields[id].crop) {
+                const plant = (new Plant()).createFromFIle(fields[id].crop);
+                plant.newDay(temp);
+                await db.fields.updateOne({ _id: fields[id]._id }, { $set: { crop: plant.saveToFile()}});
+            }
 
-        for (const id in entities.fields) {
-            if (entities.fields[id].crop) {
-                const entity = entities.fields[id].crop
-                entity.newDay(temp);
+            if (fields[id].status === 'RENT') {
+                if(fields[id].daysBeforePayment <= 1) {
+
+                    const user = await db.users.findOne({ _id: fields[id].ownerId });
+
+                    if (user.balance >= fields[id].rentPrice || fields[id].crop) {
+                        user.balance -= fields[id].establishedPrice;
+                        await user.save();
+                        await db.fields.updateOne({ _id: fields[id]._id }, { $set: { daysBeforePayment: 365 }});
+                    } else {
+                        await db.fields.updateOne({ _id: fields[id]._id }, { $set: {
+                                daysBeforePayment: null,
+                                ownerId: null,
+                                status: 'EMPTY'
+                            }});
+                    }
+                } else {
+                    await db.fields.updateOne({ _id: fields[id]._id }, { $inc: { daysBeforePayment: -1 }});
+                }
             }
         }
 
-        if (currentDay % 10 === 0)
+        if (currentDay % ECONOMY_PERIOD === 0)
             economy.newPriceFactor();
 
         if (currentDay >= DAYS) {
@@ -96,10 +98,30 @@ app.use(express.static('node_modules/bootstrap/dist'));
 app.use(express.static('node_modules/bootstrap-vue/dist'));
 app.use(express.static('node_modules/vue/dist'));
 app.use(express.static('views/public'));
+app.use(async (req, res, next) => {
+    req.user = await db.users.findOne({ }).lean().exec();
+    req.user.fields = await db.fields.find({ ownerId: req.user._id }).lean().exec();
+    req.economy = economy;
+    req.db = db;
+
+    // TODO вынести актуальные цены в отдельную коллекцию, и пересчитывать при обновлении экономики
+    req.actualPrices = {};
+    const seeds = await req.db.seeds.find({}).lean().exec();
+    seeds.forEach((seed) => {
+        req.actualPrices[`${seed.type}`] = economy.getPriceFactor(seed.salePrice / HARVEST_PRICE_FACTOR);
+        req.actualPrices[`${seed.type}_seed`] = economy.getPriceFactor(seed.salePrice);
+    });
+
+    next();
+});
+
+app.use('/field', fieldRouter);
+app.use('/harvest', harvestRouter);
+app.use('/seeds', seedsRouter);
+
 app.get('/', (req, res) => {
     res.sendFile('views/index.html', { root: __dirname });
 });
-
 app.post('/get_field_factors', (req, res) => {
     res.json({
         code: 200,
@@ -112,170 +134,22 @@ app.post('/get_field_factors', (req, res) => {
         }
     });
 });
-
-app.post('/get_update', (req, res) => {
+app.post('/get_update', async (req, res) => {
+    const fields = await req.db.fields.find({}).lean().exec();
+    const seeds = await req.db.seeds.find({}).lean().exec();
 
     res.json({
-        actualPrices,
+        actualPrices: req.actualPrices,
         priceFactor: economy.getPriceFactor(),
         currentDay, currentYear,
         temp: weather.getDayTemp(currentDay),
-        balance: user.balance,
-        entities,
-        user
+        entities: { fields, seeds },
+        user: req.user
     });
 });
 
-app.post('/field/sow', (req, res) => {
-    const field = entities.fields[req.body.id];
-    if (field.owner !== user._id)
-        return res.json({ error: 'Это не ваше поле' });
-
-    const seed = entities.seeds.find((el) => el.type === req.body.seedType);
-
-    if (!seed)
-        return res.json({ error: 'Не правильно указан тип семян' });
-
-    if (req.body.quantity > field.size)
-        req.body.quantity = field.size;
-
-    if (user.warehouse.seeds[seed.type] < req.body.quantity)
-        return res.json({ error: 'Не хватает семян' });
-
-    switch (seed.type) {
-        case "wheat": field.crop = new Wheat(); break;
-        case "barley": field.crop = new Barley(); break;
-        case "corn": field.crop = new Corn(); break;
-    }
-    user.warehouse.seeds[seed.type] -= req.body.quantity;
-    field.filed = req.body.quantity;
-});
-
-app.post('/field/harvest', (req, res) => {
-    const field = entities.fields[req.body.id];
-
-    if (field.owner !== user._id)
-        return res.json({ error: 'Это не ваше поле' });
-
-    if (!field.crop)
-        return res.json({ error: 'Это поле не засеяно' });
-
-    if (field.crop.period !== 'AGING')
-        return res.json({ error: 'Урожай не созрел' });
-
-    if (!user.warehouse.harvest[field.crop.seedType])
-        user.warehouse.harvest[field.crop.seedType] = 0;
-    user.warehouse.harvest[field.crop.seedType] += field.crop.currentHarvest * field.filed;
-    field.crop = null;
-});
-
-app.post('/field/clear', (req, res) => {
-    const field = entities.fields[req.body.id];
-
-    if (field.owner !== user._id)
-        return res.json({ error: 'Это не ваше поле' });
-
-    if (field.crop.period === 'DIE')
-        field.crop = null;
-
-    res.json({ code: 200 });
-});
-
-app.post('/harvest/sell', (req, res) => {
-    if (user.warehouse.harvest[req.body.harvestType] <= 0)
-        return res.json({ error: 'Нечего продавать' });
-
-    if (req.body.quantity > user.warehouse.harvest[req.body.harvestType])
-        req.body.quantity = user.warehouse.harvest[req.body.harvestType];
-
-    const price = actualPrices[req.body.harvestType] * req.body.quantity;
-
-    user.balance += price;
-    user.warehouse.harvest[req.body.harvestType] -= req.body.quantity;
-
-    res.json({ code: 200, text: textReceived(price)});
-});
-
-app.post('/seeds/buy', (req, res) => {
-    const seed = entities.seeds.find((el) => el.type === req.body.seedType);
-    req.body.quantity = Number(req.body.quantity);
-    const price = economy.getActualPrice(seed.salePrice * req.body.quantity);
-
-    if (!seed)
-        return res.json({ error: 'Не правильно указан тип семян' });
-
-    if (price > user.balance)
-        return res.json({ error: 'У вас не достаточно денег' });
-
-    user.balance -= price;
-    if (!user.warehouse.seeds[req.body.seedType])
-        user.warehouse.seeds[req.body.seedType] = 0;
-    user.warehouse.seeds[req.body.seedType] += req.body.quantity;
-
-    res.json({ code: 200, text: textSpent(price) });
-});
-
-app.post('/field/unrent', (req, res) => {
-    const field = entities.fields[req.body.id];
-
-    if (field.owner !== user._id)
-        return res.json({ error: 'Это не ваше поле' });
-
-    field.owner = null;
-    field.status = null;
-
-    res.json({ code: 200 });
-});
-
-app.post('/field/rent', (req, res) => {
-    const field = entities.fields[req.body.id];
-    const price = economy.getActualPrice(field.rentPrice);
-
-    if (field.owner)
-        return res.json({ error: 'Это поле занято' });
-    if (price > user.balance)
-        return res.json({ error: 'У вас не достаточно денег' });
-
-    user.balance -= price;
-    field.owner = user._id;
-    field.establishedPrice = price;
-    field.status = 'rent';
-
-    res.json({ code: 200, text: textSpent(price) });
-});
-
-app.post('/field/buy', (req, res) => {
-    const field = entities.fields[req.body.id];
-    const price = economy.getActualPrice(field.salePrice);
-
-    if (field.owner)
-        return res.json({ error: 'Это поле занято' });
-
-    if (price > user.balance)
-        return res.json({ error: 'У вас не достаточно денег' });
-
-    user.balance -= price;
-    field.owner = user._id;
-    field.status = 'bought';
-
-    res.json({ code: 200, text: textSpent(price) });
-});
-
-app.post('/field/sell', (req, res) => {
-    const field = entities.fields[req.body.id];
-    const price = economy.getActualPrice(field.salePrice);
-
-    if (field.owner !== user._id)
-        return res.json({ error: 'Это не ваше поле' });
-
-    user.balance += price;
-    field.owner = null;
-    field.status = null;
-
-    res.json({ code: 200, text: textReceived(price)});
-});
-
 app.listen(port, async () => {
+    await db.init();
     setInterval(async () => {
         await action();
     }, 100);

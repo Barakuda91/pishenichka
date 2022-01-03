@@ -4,9 +4,10 @@
     <title>MY CALCULATOR</title>
     <script src="/js/bootstrap.js"></script>
     <script src="/vue.js"></script>
+    <script src="/js/add.js"></script>
     <link href="/css/bootstrap.css" rel="stylesheet">
     <link href="/bootstrap-vue.css" rel="stylesheet">
-    <link href="/style/style.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
 </head>
 <body>
 <div class="container" id="app">
@@ -163,7 +164,7 @@
                             <div class="col-sm-2 text-small">покупка</div>
                         </div>
                         <div v-for="(item, index) in entities.fields">
-                            <div class="row" v-show="!item.owner">
+                            <div class="row" v-show="!item.ownerId">
                                 <div class="col-sm-1"> {{ item.size }} </div>
                                 <div class="col-sm-7 text-small">
                                     <div class="row">
@@ -175,10 +176,10 @@
                                     </div>
                                 </div>
                                 <div class="col-sm-2">
-                                    <button class="btn btn-sm btn-success mb-1" @click="rent_field(index)"> {{ $(item.rentPrice) }} </button>
+                                    <button class="btn btn-sm btn-success mb-1" @click="rent_field(item._id)"> {{ $(item.rentPrice) }} </button>
                                 </div>
                                 <div class="col-sm-2">
-                                    <button class="btn btn-sm btn-success mb-1" @click="buy_field(index)"> {{ $(item.salePrice) }} </button>
+                                    <button class="btn btn-sm btn-success mb-1" @click="buy_field(item._id)"> {{ $(item.salePrice) }} </button>
                                 </div>
                             </div>
                         </div>
@@ -196,11 +197,11 @@
 
             <div v-show="additional_tab === 'fields'">
                 <div class="row">
-                    <div v-for="(field, id) in entities.fields" class="col-sm-12" v-if="field.owner === user._id">
+                    <div v-for="(field, id) in user.fields" class="col-sm-12">
                         <div class="card">
                             <div class="card-body">
                                 <h5 class="card-title">{{ field.size }}га <span v-if="field.crop"> [ {{ field.crop.currentStateText }} ]</span></h5>
-                                <p class="text-xl-start text-small" v-if="field.establishedPrice">{{ field.establishedPrice.toFixed(0) }}/год </p>
+                                <p class="text-xl-start text-small" v-if="field.establishedPrice">{{ field.establishedPrice.toFixed(0) }}/год  (до оплаты {{ field.daysBeforePayment}}) дней</p>
                                 <div class="row">
                                     <div class="col-5">
                                         <ul class="list-unstyled mt-3 mb-4">
@@ -226,12 +227,12 @@
                                             </li>
                                         </ul>
 
-                                        <a href="#" v-show="!field.crop" class="btn btn-primary btn-sm" v-on:click="sow_field(id, sow_field_type[id], sow_field_quantity[id])">засеять</a>
-                                        <a href="#" v-show="field.crop && field.crop.period !== 'DIE'" class="btn btn-primary btn-sm" v-on:click="harvest_field(id)">собрать</a>
-                                        <a href="#" v-show="field.crop && field.crop.period === 'DIE'" class="btn btn-primary btn-sm" v-on:click="clear_field(id)">очистить</a>
+                                        <a href="#" v-show="!field.crop" class="btn btn-primary btn-sm" v-on:click="sow_field(field._id, sow_field_type[id], sow_field_quantity[id])">засеять</a>
+                                        <a href="#" v-show="field.crop && field.crop.period !== 'DIE'" class="btn btn-primary btn-sm" v-on:click="harvest_field(field._id)">собрать</a>
+                                        <a href="#" v-show="field.crop && field.crop.period === 'DIE'" class="btn btn-primary btn-sm" v-on:click="clear_field(field._id)">очистить</a>
 
-                                        <a href="#" v-show="field.status === 'bought'" class="btn btn-primary btn-sm" v-on:click="sell_field(id)">продать</a>
-                                        <a href="#" v-show="field.status === 'rent'" class="btn btn-primary btn-sm" v-on:click="unrent_field(id)">вернуть</a>
+                                        <a href="#" v-show="field.status === 'BOUGHT'" class="btn btn-primary btn-sm" v-on:click="sell_field(field._id)">продать</a>
+                                        <a href="#" v-show="field.status === 'RENT'" class="btn btn-primary btn-sm" v-on:click="unrent_field(field._id)">вернуть</a>
                                     </div>
 
                                     <div class="col-4">
@@ -242,11 +243,11 @@
                                         <div>Автоудобритель (lv{{ field.buildings.emitter.lv }})</div>
                                     </div>
                                     <div class="col-3">
-                                        <button class="btn btn-primary btn-sm w-100 mb-1" v-bind:class="field.status === 'rent' ? 'disabled' : ''" v-on:click="build(id, 'garage')">Построить {{ $(fieldFactors.fieldGarage[0] * field.salePrice) }}</button>
-                                        <button class="btn btn-primary btn-sm w-100 mb-1" v-bind:class="field.status === 'rent' ? 'disabled' : ''" v-on:click="build(id, 'elevator')">Построить {{ $(fieldFactors.fieldElevator[0] * field.salePrice) }}</button>
-                                        <button class="btn btn-primary btn-sm w-100 mb-1" v-bind:class="field.status === 'rent' ? 'disabled' : ''" v-on:click="build(id, 'irrigationComplex')">Построить {{ $(fieldFactors.fieldIrrigationComplex[0] * field.salePrice) }}</button>
-                                        <button class="btn btn-primary btn-sm w-100 mb-1" v-bind:class="field.status === 'rent' ? 'disabled' : ''" v-on:click="build(id, 'assembler')">Построить {{ $(fieldFactors.fieldAssembler[0] * field.salePrice) }}</button>
-                                        <button class="btn btn-primary btn-sm w-100 mb-1" v-bind:class="field.status === 'rent' ? 'disabled' : ''" v-on:click="build(id, 'emitter')">Построить {{ $(fieldFactors.fieldEmitter[0] * field.salePrice) }}</button>
+                                        <button class="btn btn-primary btn-sm w-100 mb-1" v-bind:class="field.status === 'RENT' ? 'disabled' : ''" v-on:click="build(id, 'garage')">Построить {{ $(fieldFactors.fieldGarage[0] * field.salePrice) }}</button>
+                                        <button class="btn btn-primary btn-sm w-100 mb-1" v-bind:class="field.status === 'RENT' ? 'disabled' : ''" v-on:click="build(id, 'elevator')">Построить {{ $(fieldFactors.fieldElevator[0] * field.salePrice) }}</button>
+                                        <button class="btn btn-primary btn-sm w-100 mb-1" v-bind:class="field.status === 'RENT' ? 'disabled' : ''" v-on:click="build(id, 'irrigationComplex')">Построить {{ $(fieldFactors.fieldIrrigationComplex[0] * field.salePrice) }}</button>
+                                        <button class="btn btn-primary btn-sm w-100 mb-1" v-bind:class="field.status === 'RENT' ? 'disabled' : ''" v-on:click="build(id, 'assembler')">Построить {{ $(fieldFactors.fieldAssembler[0] * field.salePrice) }}</button>
+                                        <button class="btn btn-primary btn-sm w-100 mb-1" v-bind:class="field.status === 'RENT' ? 'disabled' : ''" v-on:click="build(id, 'emitter')">Построить {{ $(fieldFactors.fieldEmitter[0] * field.salePrice) }}</button>
                                     </div>
                                 </div>
                             </div>
@@ -314,19 +315,6 @@
 
         return resData;
     }
-    async function update() {
-        const data = await postData('/get_update');
-        // console.log('data', data);
-        if (data.error) this.startErrorModal(data.error);
-        this.day = data.currentDay;
-        this.year = data.currentYear;
-        this.temp = data.temp;
-        this.balance = data.balance;
-        this.entities = data.entities;
-        this.user = data.user;
-        this.priceFactor = data.priceFactor;
-        this.actualPrices = data.actualPrices;
-    }
 
     const app = new Vue({
         el: '#app',
@@ -377,25 +365,42 @@
             $: function(price) {
                 return (price * this.priceFactor).toFixed(0);
             },
-            update,
+            update: async function () {
+                const data = await postData('/get_update');
+                // console.log('data', data);
+                if (data.error) this.startErrorModal(data.error);
+                this.day = data.currentDay;
+                this.year = data.currentYear;
+                this.temp = data.temp;
+                this.balance = data.user.balance;
+                this.entities = data.entities;
+                this.user = data.user;
+                this.priceFactor = data.priceFactor;
+                this.actualPrices = data.actualPrices;
+            },
             update_warehouse_values: function () {
 
-                for(const harvestType in this.user.warehouse.harvest) {
-                    this.sell_harvest_quantity[harvestType] = this.user.warehouse.harvest[harvestType]
-                        ? this.user.warehouse.harvest[harvestType].toFixed(0)
-                        : 0;
-                }
+                // if (this.user.warehouse) {
+                //     for(const harvestType in this.user.warehouse.harvest) {
+                //         this.sell_harvest_quantity[harvestType] = this.user.warehouse.harvest[harvestType]
+                //             ? this.user.warehouse.harvest[harvestType].toFixed(0)
+                //             : 0;
+                //     }
+                // }
 
             },
             update_fields_values: function () {
-                this.entities.fields.forEach((field, id) => {
-                    if(field.owner === this.user._id) {
-                        this.sow_field_quantity[id] = this.user.warehouse.seeds['wheat']
-                            ? this.user.warehouse.seeds['wheat'] > field.size ? field.size : this.user.warehouse.seeds['wheat'].toFixed(0)
-                            : 0;
-                        this.sow_field_type[id] = 'wheat';
-                    }
-                });
+
+                // if (this.user.warehouse) {
+                //     this.entities.fields.forEach((field, id) => {
+                //         if (field.ownerId === this.user._id) {
+                //             this.sow_field_quantity[id] = this.user.warehouse.seeds['wheat']
+                //                 ? this.user.warehouse.seeds['wheat'] > field.size ? field.size : this.user.warehouse.seeds['wheat'].toFixed(0)
+                //                 : 0;
+                //             this.sow_field_type[id] = 'wheat';
+                //         }
+                //     });
+                // }
             },
             startInfoModal: function (text) {
                 this.infoModalText = text;
