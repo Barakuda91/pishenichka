@@ -1,0 +1,6 @@
+{
+  "db": {
+    "connect_path": "mongodb://localhost:27017/pishenichka",
+    "models_path": "/lib/models"
+  }
+}
