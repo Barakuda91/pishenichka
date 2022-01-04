@@ -8,16 +8,18 @@ const Plant = require('./lib/entities/Plant');
 const fieldRouter = require('./routers/field');
 const harvestRouter = require('./routers/harvest');
 const seedsRouter = require('./routers/seeds');
+const authRouter = require('./routers/auth');
 
 const express = require('express');
 const bodyParser = require('body-parser');
-
-const { randomIntFromInterval } = require('./lib/tools');
+const cookieParser = require('cookie-parser');
+const jwt = require('jsonwebtoken');
 
 const port = 1995;
 const DAYS = 365;
 const ECONOMY_PERIOD = 7;
-const DAY_DURATION = 400;
+// const DAY_DURATION = 40000; // игровой год = 4м реальным часам
+const DAY_DURATION = 400; // игровой год - 2,5 минуты
 const HARVEST_PRICE_FACTOR = 712;
 
 let currentTime = Date.now();
@@ -29,17 +31,11 @@ let weather = new Weather();
 let economy = new Economy();
 const db = new DB();
 
-// Должен быть класс поля, которым мы будем засеивать
 // Реализуем статистику за день, типо кто за игровой год больше урожая собрал
-// Год = часу ? Тогда не будет проблемы что нчью игроки спят и не могут собрать урожай
 // может быть потом сделаем возможность покупать поля и сдавать их в аренду
 // тоже самое с техникой
 
-// ИМПРОВИЗИРОВАНАЯ БАЗА
-
-// КОНЕЦ БАЗЕ
-
-const action = async () => {
+const tickAction = async () => {
 
     const seeds = await db.seeds.find({}).lean().exec();
     const fields = await db.fields.find({}).lean().exec();
@@ -93,14 +89,19 @@ const action = async () => {
 };
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.use(cookieParser());
 app.use(express.static('views/public'));
 app.use(express.static('node_modules/bootstrap/dist'));
 app.use(express.static('node_modules/bootstrap-vue/dist'));
 app.use(express.static('node_modules/vue/dist'));
 app.use(express.static('views/public'));
 app.use(async (req, res, next) => {
-    req.user = await db.users.findOne({ }).lean().exec();
-    req.user.fields = await db.fields.find({ ownerId: req.user._id }).lean().exec();
+    if (req.cookies.auth) {
+        const userCookiesData = jwt.verify(req.cookies.auth, 'volvo');
+
+        req.user = await db.users.findOne({ _id: userCookiesData._id }).lean().exec();
+        req.user.fields = await db.fields.find({ ownerId: req.user._id }).lean().exec();
+    }
     req.economy = economy;
     req.db = db;
 
@@ -115,10 +116,17 @@ app.use(async (req, res, next) => {
     next();
 });
 
+app.use('/auth', authRouter);
 app.use('/field', fieldRouter);
 app.use('/harvest', harvestRouter);
 app.use('/seeds', seedsRouter);
 
+app.get('*', (req, res, next) => {
+    if(!req.cookies.auth)
+        return res.sendFile('views/auth.html', { root: __dirname });
+    else
+        next();
+});
 app.get('/', (req, res) => {
     res.sendFile('views/index.html', { root: __dirname });
 });
@@ -151,7 +159,7 @@ app.post('/get_update', async (req, res) => {
 app.listen(port, async () => {
     await db.init();
     setInterval(async () => {
-        await action();
-    }, 100);
+        await tickAction();
+    }, 350);
     console.log(`Example app listening at http://localhost:${port}`);
 });
