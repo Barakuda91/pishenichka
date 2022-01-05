@@ -8,6 +8,71 @@
     <link href="/css/bootstrap.css" rel="stylesheet">
     <link href="/bootstrap-vue.css" rel="stylesheet">
     <link href="/css/style.css" rel="stylesheet">
+    <script type="text/x-template" id="modal-template">
+        <transition name="modal">
+            <div class="modal-mask">
+                <div class="modal-wrapper">
+                    <div class="modal-container">
+
+                        <div class="modal-header">
+                            <slot name="header">
+                                <h3 slot="header">Создание нового сектора</h3>
+                            </slot>
+                        </div>
+
+                        <div class="modal-body">
+                            <slot name="body">
+                                <p>Вы можете разделить ваш регион на сектора. Минимальный размер сектора - 1Га.<br />
+                                Если вы оградите сектор - он не будет считатьс дочерним сектором данного региона, и его можно будет продать.</p>
+
+                                <div class="input-group mb-3" v-for="(n, i) in sectors">
+                                    <select @change="check()" class="form-select form-select-sm" v-model="sectors[i].type" aria-label=".form-select-sm example">
+                                        <option disabled selected="selected">тип сектора</option>
+                                        <option value="field">поле</option>
+                                        <option value="vineyard">виноградник</option>
+                                        <option value="garden">сад</option>
+                                        <option style="font-size: 1pt; background-color: rgba(0,0,0,0.33);" disabled>&nbsp;</option>
+                                        <option value="warehouse">склад</option>
+                                        <option value="elevator">элеватор</option>
+                                        <option value="garage">скважина</option>
+                                        <option value="h4">гараж</option>
+                                        <option style="font-size: 1pt; background-color: rgba(0,0,0,0.33);" disabled>&nbsp;</option>
+                                        <option value="winery">винный завод</option>
+                                        <option value="brewery">пивоварня</option>
+                                        <option value="distillery">вискикурня</option>
+                                        <option style="font-size: 1pt; background-color: rgba(0,0,0,0.33);" disabled>&nbsp;</option>
+                                        <option value="bakery">хлебзавод</option>
+                                    </select>
+                                    <input @change="check()" type="number" min="1" v-bind:max="available_space" v-model="sectors[i].size" placeholder="размер Га" class="form-control" aria-describedby="button-addon1">
+                                    <div class="form-check" style="margin: 8px">
+                                        <input class="form-check-input" type="checkbox" v-model="sectors[i].separate" id="flexCheckChecked">
+                                        <label class="form-check-label" for="flexCheckChecked">
+                                            отделить
+                                        </label>
+                                    </div>
+
+                                    <button v-if="i === sectors.length - 1 && newSectorDisabled" @click="sectors.push({ size: 1 }); check()">+</button>
+                                    <button v-if="i !== sectors.length - 1 || !newSectorDisabled" @click="sectors.pop(); check()">-</button>
+                                </div>
+                            </slot>
+                        </div>
+
+                        <div class="modal-footer">
+                            <slot name="footer">
+                                <h6 class="text-danger" v-if="!newSectorDisabled" style="width: 45%;">Доступно только {{available_space}}Га</h6>
+                                <button class="modal-default-button" @click="$emit('close')" style="width: 25%;">
+                                    отмена
+                                </button>
+                                <button class="modal-default-button" v-bind:disabled="createDisabled" @click="create()" style="width: 25%;">
+                                    создать
+                                </button>
+                            </slot>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
+    </script>
 </head>
 <body>
 <div class="container" id="app">
@@ -30,10 +95,10 @@
             <ul class="list-unstyled mt-3 mb-4">
                 <li>
                     <button
-                            @click="additional_tab = additional_tab === 'fields' ? null : 'fields'; update_fields_values();"
-                            v-bind:class="additional_tab === 'fields' ? 'btn-primary' : 'btn-outline-primary'"
+                            @click="additional_tab = additional_tab === 'regions' ? null : 'regions'; update_regions_values();"
+                            v-bind:class="additional_tab === 'regions' ? 'btn-primary' : 'btn-outline-primary'"
                             class="btn btn-sm w-100 mb-1"
-                    >мои поля</button>
+                    >регионы</button>
                 </li>
                 <li>
                     <button
@@ -195,7 +260,58 @@
                 </div>
             </div>
 
-            <div v-show="additional_tab === 'fields'">
+            <div v-show="additional_tab === 'regions'">
+
+                <div class="card text-center">
+                    <div class="card-header">
+                        <ul class="nav nav-tabs card-header-tabs">
+                            <li class="nav-item">
+                                <button class="nav-link" aria-current="true" href="#"
+                                        v-bind:class="additional_regions_tab === 'regions' ? 'active' : ''"
+                                        @click="additional_regions_tab = additional_regions_tab === 'regions' ? null : 'regions'"
+                                >регионы</button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" aria-current="true" href="#"
+                                        v-bind:class="additional_regions_tab === 'fields' ? 'active' : ''"
+                                        @click="additional_regions_tab = additional_regions_tab === 'fields' ? null : 'fields'"
+                                >поля</button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" href="#"
+                                        v-bind:class="additional_regions_tab === 'seeds' ? 'active' : ''"
+                                        v-on:click="additional_regions_tab = additional_regions_tab === 'seeds' ? null : 'seeds'"
+                                >виноградники</button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" href="#"
+                                        v-bind:class="additional_regions_tab === 'technics' ? 'active' : ''"
+                                        v-on:click="additional_regions_tab = additional_regions_tab === 'technics' ? null : 'technics'"
+                                >сады</button>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="card-body" v-show="additional_regions_tab === 'regions'">
+                        <div v-for="region in user.regions">
+                            <div class="row">
+                                <div class="col-sm-2">{{ region.position[0] }}-{{ region.position[1] }}</div>
+                                <div class="col-sm-4">Доступно {{ region.availableSpace }} Га</div>
+                                <div class="col-sm-2">
+                                    секторов {{ region.sectors ? region.sectors.length : 0}}
+                                </div>
+                                <div class="col-sm-4">
+                                    <button
+                                            v-if="region.availableSpace > 0"
+                                            class="btn btn-sm btn-success mb-1"
+                                            id="show-modal" @click="createSector(region._id, region.availableSpace)"
+                                    >создать сектор</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="row">
                     <div v-for="(field, id) in user.fields" class="col-sm-12">
                         <div class="card">
@@ -259,29 +375,6 @@
         <div class="col-sm-3">
         </div>
     </div>
-    <!--        <div-->
-    <!--             class="modal fade show"-->
-    <!--             id="modalCenter"-->
-    <!--             tabindex="-1"-->
-    <!--             role="dialog"-->
-    <!--             aria-labelledby="modalCenterTitle"-->
-    <!--             aria-hidden="true"-->
-    <!--        >-->
-    <!--            <div class="modal-dialog">-->
-    <!--                <div class="modal-content">-->
-    <!--                    <div class="modal-header">-->
-    <!--                        <h5 class="modal-title" id="errorModalLabel">{{ errorTitle }}</h5>-->
-    <!--                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>-->
-    <!--                    </div>-->
-    <!--                    <div class="modal-body">-->
-    <!--                        {{ errorText }}-->
-    <!--                    </div>-->
-    <!--                    <div class="modal-footer">-->
-    <!--                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ясно</button>-->
-    <!--                    </div>-->
-    <!--                </div>-->
-    <!--            </div>-->
-    <!--        </div>-->
 
     <div class="alert alert-success" role="alert" v-show="infoModalText">
         {{ infoModalText }}
@@ -290,15 +383,49 @@
         {{ errorText }}
     </div>
 
+    <create_sectors v-bind:region_id="createSectors.regionId" v-bind:available_space="createSectors.availableSpace" v-if="createSectors.show" @close="createSectors.show = false"></create_sectors>
 </div>
 </body>
 </html>
 <script>
+
+    Vue.component("create_sectors", {
+        template: "#modal-template",
+        props: ['region_id', 'available_space'],
+        data: function () {
+            return {
+                sectors: [{ size: 1 }],
+                createDisabled: false,
+                newSectorDisabled: false
+            }
+        },
+        beforeMount(){
+            this.check();
+        },
+        methods: {
+            check() {
+                let size = 0;
+                this.sectors.forEach((sector) => {
+                    size += Number(sector.size);
+                });
+
+                this.createDisabled = size > this.available_space;
+                this.newSectorDisabled = size <= this.available_space;
+            },
+            async create() {
+                const data = await postData('/sectors/create', { id: this.region_id, sectors: this.sectors });
+                console.log('data', data);
+                data.code === 200 && this.$emit('close');
+            }
+        }
+    });
+
     const app = new Vue({
         el: '#app',
         data: {
-            additional_tab: 'fields',
+            additional_tab: 'regions',
             additional_shop_tab: 'fields',
+            additional_regions_tab: 'fields',
             additional_warehouse_tab: 'harvest',
             seeds_shop: {},
             sow_field_type: [],
@@ -315,15 +442,15 @@
             fieldsBuildingFactor: 0,
             entities: {},
             user: { warehouse: { seeds: {}, harvest: {}} },
-            showModal: true,
             fieldFactors: {},
             actualPrices: {},
-            plant: {}
+            plant: {},
+            createSectors: { show: false, regionId: null, availableSpace: 0 }
         },
         async beforeMount(){
             this.fieldFactors = (await postData('/get_field_factors')).data;
             await this.update();
-            this.update_fields_values();
+            this.update_regions_values();
             this.update_warehouse_values();
 
 
@@ -342,6 +469,11 @@
             },
             $: function(price) {
                 return (price * this.priceFactor).toFixed(0);
+            },
+            createSector(id, availableSpace) {
+                this.createSectors.regionId = id;
+                this.createSectors.availableSpace = availableSpace;
+                this.createSectors.show = true;
             },
             update: async function () {
                 const data = await postData('/get_update');
@@ -367,7 +499,7 @@
                 // }
 
             },
-            update_fields_values: function () {
+            update_regions_values: function () {
 
                 // if (this.user.warehouse) {
                 //     this.entities.fields.forEach((field, id) => {

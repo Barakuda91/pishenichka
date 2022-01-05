@@ -9,6 +9,7 @@ const fieldRouter = require('./routers/field');
 const harvestRouter = require('./routers/harvest');
 const seedsRouter = require('./routers/seeds');
 const authRouter = require('./routers/auth');
+const sectorsRouter = require('./routers/sectors');
 
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -120,6 +121,7 @@ app.use('/auth', authRouter);
 app.use('/field', fieldRouter);
 app.use('/harvest', harvestRouter);
 app.use('/seeds', seedsRouter);
+app.use('/sectors', sectorsRouter);
 
 app.get('*', (req, res, next) => {
     if(!req.cookies.auth)
@@ -145,15 +147,18 @@ app.post('/get_field_factors', (req, res) => {
 app.post('/get_update', async (req, res) => {
     const fields = await req.db.fields.find({}).lean().exec();
     const seeds = await req.db.seeds.find({}).lean().exec();
-
-    res.json({
+    const resObject = {
         actualPrices: req.actualPrices,
         priceFactor: economy.getPriceFactor(),
         currentDay, currentYear,
         temp: weather.getDayTemp(currentDay),
-        entities: { fields, seeds },
-        user: req.user
-    });
+        entities: { fields, seeds }
+    };
+    if (req.user) {
+        req.user.regions = await req.db.regions.find({ ownerId: req.user._id }).lean().exec();
+        resObject.user = req.user;
+    }
+    res.json(resObject);
 });
 
 app.listen(port, async () => {

@@ -38,7 +38,6 @@ router.post('/reg', async (req, res) => {
 });
 
 router.post('/login', async (req, res) => {
-    console.log(req.method, req.body);
 
     const user = await req.db.users.findOne({
         login: req.body.login
@@ -52,7 +51,7 @@ router.post('/login', async (req, res) => {
         }, 'volvo');
 
     res
-        .cookie('auth', token, {maxAge: 60 * 60 * 24 * 1000 * 365, httpOnly: false})
+        .cookie('auth', token, { maxAge: 60 * 60 * 24 * 1000 * 365, httpOnly: false })
         .json({ code: 200 });
     } else
         res.json({ code: 401 });

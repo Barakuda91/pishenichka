@@ -6,7 +6,7 @@ const Plant = require('../lib/entities/Plant');
 const { messages } = require('../lib/tools');
 
 router.post('/sow', async (req, res) => {
-    const field = await req.db.fields.findOne({ _id: req.body.id });
+    const field = await req.db.sectors.findOne({ _id: req.body.id });
     const user = await req.db.users.findOne({ _id: req.user._id });
 
     if (field.ownerId.toString() !== user._id.toString())
@@ -36,7 +36,7 @@ router.post('/sow', async (req, res) => {
 });
 
 router.post('/harvest', async (req, res) => {
-    const field = await req.db.fields.findOne({ _id: req.body.id });
+    const field = await req.db.sectors.findOne({ _id: req.body.id });
 
     if (field.ownerId.toString() !== req.user._id.toString())
         return res.json({ error: 'Это не ваше поле' });
@@ -66,7 +66,7 @@ router.post('/harvest', async (req, res) => {
 });
 
 router.post('/clear', async (req, res) => {
-    const field = await req.db.fields.findOne({ _id: req.body.id });
+    const field = await req.db.sectors.findOne({ _id: req.body.id });
 
     if (field.ownerId.toString() !== req.user._id.toString())
         return res.json({ error: 'Это не ваше поле' });
@@ -80,7 +80,7 @@ router.post('/clear', async (req, res) => {
 });
 
 router.post('/unrent', async (req, res) => {
-    const field = await req.db.fields.findOne({ _id: req.body.id });
+    const field = await req.db.sectors.findOne({ _id: req.body.id });
 
     if (field.ownerId.toString() !== req.user._id.toString())
         return res.json({ error: 'Это не ваше поле' });
@@ -95,7 +95,7 @@ router.post('/unrent', async (req, res) => {
 });
 
 router.post('/rent', async (req, res) => {
-    const field = await req.db.fields.findOne({ _id: req.body.id });
+    const field = await req.db.sectors.findOne({ _id: req.body.id });
     const user = await req.db.users.findOne({ _id: req.user._id });
 
     const price = req.economy.getActualPrice(field.rentPrice);
@@ -118,7 +118,7 @@ router.post('/rent', async (req, res) => {
 });
 
 router.post('/buy', async (req, res) => {
-    const field = await req.db.fields.findOne({ _id: req.body.id });
+    const field = await req.db.sectors.findOne({ _id: req.body.id });
     const user = await req.db.users.findOne({ _id: req.user._id });
     const price = req.economy.getActualPrice(field.salePrice);
 
@@ -139,7 +139,7 @@ router.post('/buy', async (req, res) => {
 });
 
 router.post('/sell', async (req, res) => {
-    const field = await req.db.fields.findOne({ _id: req.body.id });
+    const field = await req.db.sectors.findOne({ _id: req.body.id });
     const user = await req.db.users.findOne({ _id: req.user._id });
     const price = req.economy.getActualPrice(field.salePrice);
 

@@ -12,10 +12,13 @@ router.post('/sell', async (req, res) => {
     const price = req.actualPrices[req.body.harvestType] * req.body.quantity;
     req.user.warehouse.harvest[req.body.harvestType] -= req.body.quantity;
 
-    await req.db.users.updateOne({ _id: req.user._id}, {
-        $inc: {balance: price},
-        $set: {'warehouse.harvest': req.user.warehouse.harvest}
-    });
+    await req.db.users.updateOne(
+        {
+            _id: req.user._id
+        }, {
+            $inc: { balance: price },
+            $set: { 'warehouse.harvest': req.user.warehouse.harvest }
+        });
 
     res.json({ code: 200, text: messages.textReceived(price)});
 });
