@@ -39,37 +39,37 @@ const db = new DB();
 const tickAction = async () => {
 
     const seeds = await db.seeds.find({}).lean().exec();
-    const fields = await db.fields.find({}).lean().exec();
+    const sectors = await db.sectors.find({}).lean().exec();
 
     if (Date.now() >= currentTime + (DAY_DURATION * currentDay)) {
         currentDay++;
         const temp = weather.getDayTemp(currentDay);
 
-        for (const id in fields) {
-            if (fields[id].crop) {
-                const plant = (new Plant()).createFromFIle(fields[id].crop);
+        for (const id in sectors) {
+            if (sectors[id].crop) {
+                const plant = (new Plant()).createFromFIle(sectors[id].crop);
                 plant.newDay(temp);
-                await db.fields.updateOne({ _id: fields[id]._id }, { $set: { crop: plant.saveToFile()}});
+                await db.sectors.updateOne({ _id: sectors[id]._id }, { $set: { crop: plant.saveToFile()}});
             }
 
-            if (fields[id].status === 'RENT') {
-                if(fields[id].daysBeforePayment <= 1) {
+            if (sectors[id].status === 'RENT') {
+                if(sectors[id].daysBeforePayment <= 1) {
 
-                    const user = await db.users.findOne({ _id: fields[id].ownerId });
+                    const user = await db.users.findOne({ _id: sectors[id].ownerId });
 
-                    if (user.balance >= fields[id].rentPrice || fields[id].crop) {
-                        user.balance -= fields[id].establishedPrice;
+                    if (user.balance >= sectors[id].rentPrice || sectors[id].crop) {
+                        user.balance -= sectors[id].establishedPrice;
                         await user.save();
-                        await db.fields.updateOne({ _id: fields[id]._id }, { $set: { daysBeforePayment: 365 }});
+                        await db.sectors.updateOne({ _id: sectors[id]._id }, { $set: { daysBeforePayment: 365 }});
                     } else {
-                        await db.fields.updateOne({ _id: fields[id]._id }, { $set: {
+                        await db.sectors.updateOne({ _id: sectors[id]._id }, { $set: {
                                 daysBeforePayment: null,
                                 ownerId: null,
                                 status: 'EMPTY'
                             }});
                     }
                 } else {
-                    await db.fields.updateOne({ _id: fields[id]._id }, { $inc: { daysBeforePayment: -1 }});
+                    await db.sectors.updateOne({ _id: sectors[id]._id }, { $inc: { daysBeforePayment: -1 }});
                 }
             }
         }
@@ -101,7 +101,7 @@ app.use(async (req, res, next) => {
         const userCookiesData = jwt.verify(req.cookies.auth, 'volvo');
 
         req.user = await db.users.findOne({ _id: userCookiesData._id }).lean().exec();
-        req.user.fields = await db.fields.find({ ownerId: req.user._id }).lean().exec();
+        req.user.sectors = await db.sectors.find({ ownerId: req.user._id }).lean().exec();
     }
     req.economy = economy;
     req.db = db;
@@ -136,23 +136,23 @@ app.post('/get_field_factors', (req, res) => {
     res.json({
         code: 200,
         data: {
-            fieldGarage: [0.08, 0.1, 0.13, 0.18, 0.25],
-            fieldElevator: [0.25, 0.36, 0.47, 0.58, 0.70],
-            fieldIrrigationComplex: [0.15, 0.26, 0.37, 0.48, 0.59],
-            fieldAssembler: [0.09, 0.12, 0.18, 0.22, 0.38],
-            fieldEmitter: [0.1, 0.21, 0.29, 0.35, 0.49],
+            sectorGarage: [0.08, 0.1, 0.13, 0.18, 0.25],
+            sectorElevator: [0.25, 0.36, 0.47, 0.58, 0.70],
+            sectorIrrigationComplex: [0.15, 0.26, 0.37, 0.48, 0.59],
+            sectorAssembler: [0.09, 0.12, 0.18, 0.22, 0.38],
+            sectorEmitter: [0.1, 0.21, 0.29, 0.35, 0.49],
         }
     });
 });
 app.post('/get_update', async (req, res) => {
-    const fields = await req.db.fields.find({}).lean().exec();
+    const sectors = await req.db.sectors.find({}).lean().exec();
     const seeds = await req.db.seeds.find({}).lean().exec();
     const resObject = {
         actualPrices: req.actualPrices,
         priceFactor: economy.getPriceFactor(),
         currentDay, currentYear,
         temp: weather.getDayTemp(currentDay),
-        entities: { fields, seeds }
+        entities: { sectors, seeds }
     };
     if (req.user) {
         req.user.regions = await req.db.regions.find({ ownerId: req.user._id }).lean().exec();

@@ -71,8 +71,7 @@ router.post('/clear', async (req, res) => {
     if (field.ownerId.toString() !== req.user._id.toString())
         return res.json({ error: 'Это не ваше поле' });
 
-    if (field.crop.period === 'DIE')
-        field.crop = null;
+    field.crop = null;
 
     await field.save();
 
@@ -131,6 +130,7 @@ router.post('/buy', async (req, res) => {
     user.balance -= price;
     field.ownerId = user._id;
     field.status = 'BOUGHT';
+    field.type = 'FIELD';
 
     await field.save();
     await user.save();
