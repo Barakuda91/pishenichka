@@ -156,6 +156,9 @@ app.post('/get_update', async (req, res) => {
     };
     if (req.user) {
         req.user.regions = await req.db.regions.find({ ownerId: req.user._id }).lean().exec();
+        for(const index in req.user.regions) {
+            req.user.regions[index].sectorsCount = await req.db.sectors.count({ parentRegion: req.user.regions[index]._id});
+        }
         resObject.user = req.user;
     }
     res.json(resObject);

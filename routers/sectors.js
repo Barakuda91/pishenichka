@@ -2,6 +2,10 @@ const express = require('express');
 const router = express.Router();
 const { messages } = require('../lib/tools');
 
+router.get('/', async (req, res) => {
+
+});
+
 router.post('/create', async (req, res) => {
     console.log(req.body);
     if (!req.body.id)
@@ -29,11 +33,12 @@ router.post('/create', async (req, res) => {
             rentPrice: 250 * sector.size,
             salePrice: 10500 * sector.size,
             parentRegion: region._id,
+            status: 'PRIVATE',
             ownerId: req.user._id
         };
 
+        region.availableSpace -= sector.size;
         if (sector.separate) {
-            region.availableSpace -= sector.size;
             region.totalSpace -= sector.size;
             createObj.parentRegion = null;
         }

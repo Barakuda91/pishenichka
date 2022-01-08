@@ -2,6 +2,9 @@
     padding-bottom: 0;
     padding-top: 0;
 }
+.text-smaller {
+    font-size: small;
+}
 .text-small {
     font-size: x-small;
 }
