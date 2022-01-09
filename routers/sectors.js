@@ -6,6 +6,25 @@ router.get('/', async (req, res) => {
 
 });
 
+router.post('/delete', async (req, res) => {
+    const sector = await req.db.sectors.findOne({ _id: req.body.id });
+    if (!sector)
+        return res.json({ code: 403, text: 'Сектор не найден' });
+
+    if (!sector.parentRegion)
+        return res.json({ code: 403, text: 'Сектор не имеет родительского региона' });
+
+    const region = await req.db.regions.findOne({ _id: sector.parentRegion });
+
+    if (!region)
+        return res.json({ code: 403, text: 'Регион не найден' });
+
+    region.availableSpace += sector.size;
+    await req.db.sectors.deleteOne({ _id: req.body.id });
+    await region.save();
+    res.json({ code: 200 });
+});
+
 router.post('/create', async (req, res) => {
     console.log(req.body);
     if (!req.body.id)

@@ -1,0 +1,87 @@
+<div v-show="additional_tab === 'fields'">
+    <div class="card text-center">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs">
+                <li class="nav-item">
+                    <button class="nav-link" aria-current="true" href="#"
+                            v-bind:class="additional_regions_tab === 'regions' ? 'active' : ''"
+                            @click="additional_regions_tab = additional_regions_tab === 'regions' ? null : 'regions'"
+                    >поля</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" aria-current="true" href="#"
+                            v-bind:class="additional_regions_tab === 'sectors' ? 'active' : ''"
+                            @click="additional_regions_tab = additional_regions_tab === 'sectors' ? null : 'sectors'"
+                    >виноградники</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" aria-current="true" href="#"
+                            v-bind:class="additional_regions_tab === 'sectors' ? 'active' : ''"
+                            @click="additional_regions_tab = additional_regions_tab === 'sectors' ? null : 'sectors'"
+                    >сады</button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="row">
+            <div v-for="(sector, id) in user.sectors" class="col-sm-12">
+                <div class="card-body" style="border-bottom: 1px solid #dfdfdf">
+                    <div class="row">
+                        <div class="col-sm-5">
+                            инфо
+                        </div>
+                        <div class="col-sm-7">
+                            посев <span v-if="sector.crop"> [ {{ sector.crop.currentStateText }} ]</span>
+                        </div>
+                    </div>
+                    <div class="row text-left">
+                        <div class="col-sm-5">
+                            <div class="row">регион: {{ sector.position[0] }}-{{ sector.position[1] }}</div>
+
+                            <div class="row">размер: {{ sector.size }}га </div>
+                            <div class="row" v-if="sector.establishedPrice">
+                                аренда:
+                                <span f-if="sector.establishedPrice">
+                                        {{ sector.establishedPrice.toFixed(0) }}/год  (до оплаты {{ sector.daysBeforePayment}}) дней
+                                    </span>
+                            </div>
+                        </div>
+                        <div class="col-sm-7">
+                            <div class="row" v-if="sector.crop">
+                                <div class="col-sm-12">
+                                    Засеяно: <span class="fw-bold"> {{ sector.crop.name }}</span> / {{ sector.filed }}га
+                                </div>
+                                <div class="col-sm-12">
+                                    Состояние роста: <span class="fw-bold">{{ sector.crop ? sector.crop.currentState.toFixed(0) : 0 }}%</span>
+                                </div>
+                                <div class="col-sm-6">
+                                    Урожая: <span class="fw-bold">{{ sector.crop ? (sector.crop.currentHarvest * sector.filed).toFixed(0) : 0 }}</span>
+                                </div>
+                                <div class="col-sm-6">
+                                    <a href="#" v-show="sector.crop && sector.crop.currentState.toFixed(0) === '100'" class="btn btn-primary btn-sm" v-on:click="harvest_sector(sector._id)">собрать</a>
+                                    <a href="#" v-show="sector.crop && sector.crop.currentState.toFixed(0) !== '100'" class="btn btn-danger btn-sm" v-on:click="clear_sector(sector._id)">очистить</a>
+                                </div>
+                            </div>
+                            <div class="row" v-if="!sector.crop">
+                                <div class="input-group mb-3">
+                                    <select class="form-select" aria-label="Default select example" v-model="sow_sector_type[id]" class="dropdown-menu" style="width: 115px;">
+                                        <option value="wheat" selected="selected">{{ _('wheat')}}</option>
+                                        <option value="barley">{{ _('barley')}}</option>
+                                        <option value="corn">{{ _('corn')}}</option>
+                                    </select>
+                                    <input type="number" min="1" v-bind:max="sector.size" v-model="sow_sector_quantity[id]" class="form-control" placeholder="" aria-label="Example text with button addon" aria-describedby="button-addon1">
+                                    <span class="input-group-text">{{ user.warehouse.seeds[sow_sector_type[id]] || 0 }}</span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-2">
+                                    <a v-show="!sector.crop" class="btn btn-primary btn-sm" @click="sow_sector(sector._id, sow_sector_type[id], sow_sector_quantity[id])">засеять</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

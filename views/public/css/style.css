@@ -8,6 +8,9 @@
 .text-small {
     font-size: x-small;
 }
+.text-left {
+    text-align: left;
+}
 
 
 .modal-mask {

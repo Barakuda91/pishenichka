@@ -8,13 +8,13 @@ const db = new DB();
 (async () => {
     await db.init();
 
-    await db.sectors.deleteMany({});
-    await db.sectors.insertMany([
-        { buildings: { garage: { lv: 0 }, elevator: { lv: 0 }, irrigationComplex: { lv: 0 }, assembler: { lv: 0 }, emitter: { lv: 0 }}, size: 19, isFree: true, rentPrice: 4750, salePrice: 199500, status: 'EMPTY', filed: 0 },
-        { buildings: { garage: { lv: 0 }, elevator: { lv: 3 }, irrigationComplex: { lv: 2 }, assembler: { lv: 0 }, emitter: { lv: 3 }}, size: 32, isFree: true, rentPrice: 8000, salePrice: 336000, status: 'EMPTY', filed: 0 },
-        { buildings: { garage: { lv: 0 }, elevator: { lv: 0 }, irrigationComplex: { lv: 0 }, assembler: { lv: 0 }, emitter: { lv: 0 }}, size: 59, isFree: true, rentPrice: 14750, salePrice: 619500, status: 'EMPTY', filed: 0 },
-        { buildings: { garage: { lv: 2 }, elevator: { lv: 3 }, irrigationComplex: { lv: 1 }, assembler: { lv: 1 }, emitter: { lv: 2 }}, size: 78, isFree: true, rentPrice: 19500, salePrice: 819000, status: 'EMPTY', filed: 0 }
-    ]);
+    // await db.sectors.deleteMany({});
+    // await db.sectors.insertMany([
+    //     { buildings: { garage: { lv: 0 }, elevator: { lv: 0 }, irrigationComplex: { lv: 0 }, assembler: { lv: 0 }, emitter: { lv: 0 }}, size: 19, isFree: true, rentPrice: 4750, salePrice: 199500, status: 'EMPTY', filed: 0 },
+    //     { buildings: { garage: { lv: 0 }, elevator: { lv: 3 }, irrigationComplex: { lv: 2 }, assembler: { lv: 0 }, emitter: { lv: 3 }}, size: 32, isFree: true, rentPrice: 8000, salePrice: 336000, status: 'EMPTY', filed: 0 },
+    //     { buildings: { garage: { lv: 0 }, elevator: { lv: 0 }, irrigationComplex: { lv: 0 }, assembler: { lv: 0 }, emitter: { lv: 0 }}, size: 59, isFree: true, rentPrice: 14750, salePrice: 619500, status: 'EMPTY', filed: 0 },
+    //     { buildings: { garage: { lv: 2 }, elevator: { lv: 3 }, irrigationComplex: { lv: 1 }, assembler: { lv: 1 }, emitter: { lv: 2 }}, size: 78, isFree: true, rentPrice: 19500, salePrice: 819000, status: 'EMPTY', filed: 0 }
+    // ]);
 
     await db.seeds.deleteMany({});
     await db.seeds.insertMany([

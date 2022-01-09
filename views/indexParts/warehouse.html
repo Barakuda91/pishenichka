@@ -1,0 +1,44 @@
+<div v-show="additional_tab === 'warehouse'">
+    <div class="card text-center">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs">
+                <li class="nav-item">
+                    <button class="nav-link" aria-current="true" href="#"
+                            v-bind:class="additional_warehouse_tab === 'harvest' ? 'active' : ''"
+                            v-on:click="additional_warehouse_tab = additional_shop_tab === 'harvest' ? null : 'harvest'"
+                    >урожай</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" href="#"
+                            v-bind:class="additional_warehouse_tab === 'seeds' ? 'active' : ''"
+                            v-on:click="additional_warehouse_tab = additional_warehouse_tab === 'seeds' ? null : 'seeds'"
+                    >семена</button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-body" v-show="additional_warehouse_tab === 'seeds'">
+            <div v-for="(quantity, seedType) in user.warehouse.seeds">
+                <div class="row">
+                    <div class="col-sm-4">{{ _(seedType)  }}</div>
+                    <div class="col-sm-4">{{ quantity.toFixed(0) }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body" v-show="additional_warehouse_tab === 'harvest'">
+            <div v-for="(quantity, harvestType) in user.warehouse.harvest">
+                <div class="row">
+                    <div class="col-sm-4">{{ _(harvestType) }}</div>
+                    <div class="col-sm-3">{{ quantity.toFixed(0) }}</div>
+                    <div class="col-sm-5">
+                        <div class="input-group mb-3">
+                            <input type="number" min="0" v-bind:max="quantity" v-model="sell_harvest_quantity[harvestType]" class="form-control btn-sm ">
+                            <button class="btn btn-sm btn-success mb-1" @click="sell_harvest(harvestType, sell_harvest_quantity[harvestType]);">продать {{ (actualPrices[harvestType] * sell_harvest_quantity[harvestType]).toFixed(0) }}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

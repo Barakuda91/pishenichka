@@ -9,11 +9,14 @@ const fieldRouter = require('./routers/field');
 const harvestRouter = require('./routers/harvest');
 const seedsRouter = require('./routers/seeds');
 const authRouter = require('./routers/auth');
+const regionsRouter = require('./routers/regions');
 const sectorsRouter = require('./routers/sectors');
 
 const express = require('express');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
+const fs = require('fs-extra');
+const path = require('path');
 const jwt = require('jsonwebtoken');
 
 const port = 1995;
@@ -121,17 +124,58 @@ app.use('/auth', authRouter);
 app.use('/field', fieldRouter);
 app.use('/harvest', harvestRouter);
 app.use('/seeds', seedsRouter);
+app.use('/regions', regionsRouter);
 app.use('/sectors', sectorsRouter);
 
-app.get('*', (req, res, next) => {
+app.get('*', async (req, res, next) => {
+    res.sendFile = async (filePath, ops) => {
+
+        const file = (await fs.readFile(path.join(ops.root, filePath))).toString();
+        const htmlDir = path.join(ops.root, '/views/templates');
+        const jsDir = path.join(ops.root, '/views/public/js/components');
+        const htmlFiles = await fs.readdir(htmlDir);
+        const jsFiles = await fs.readdir(jsDir);
+
+        let scripts = '';
+        for(const file of jsFiles) {
+            scripts += `<script src="/js/components/${file}"></script>`;
+        }
+
+        let templates = '';
+        for(const file of htmlFiles) {
+            templates += (await fs.readFile(`${htmlDir}/${file}`)).toString();
+        }
+
+        const topLine = (await fs.readFile(`${ops.root}/views/indexParts/topLine.html`)).toString();
+        const leftMenu = (await fs.readFile(`${ops.root}/views/indexParts/leftMenu.html`)).toString();
+        const warehouse = (await fs.readFile(`${ops.root}/views/indexParts/warehouse.html`)).toString();
+        const fields = (await fs.readFile(`${ops.root}/views/indexParts/fields.html`)).toString();
+        const transport = (await fs.readFile(`${ops.root}/views/indexParts/transport.html`)).toString();
+        const shop = (await fs.readFile(`${ops.root}/views/indexParts/shop.html`)).toString();
+        const regions = (await fs.readFile(`${ops.root}/views/indexParts/regions.html`)).toString();
+
+        // если это станет узким местом - можно внедрить генератор переменной и перегенеривать её с каким то промежутком
+        res.send(file
+            .replace('<templates_top_line />', topLine)
+            .replace('<templates_warehouse />', warehouse)
+            .replace('<templates_fields />', fields)
+            .replace('<templates_transport />', transport)
+            .replace('<templates_shop />', shop)
+            .replace('<templates_regions />', regions)
+            .replace('<templates_left_menu />', leftMenu)
+            .replace('<template_htmls_components />', templates)
+            .replace('<templates_js_components />', scripts));
+    };
+
     if(!req.cookies.auth)
         return res.sendFile('views/auth.html', { root: __dirname });
-    else
-        next();
+    else next();
 });
+
 app.get('/', (req, res) => {
     res.sendFile('views/index.html', { root: __dirname });
 });
+
 app.post('/get_field_factors', (req, res) => {
     res.json({
         code: 200,
@@ -144,6 +188,7 @@ app.post('/get_field_factors', (req, res) => {
         }
     });
 });
+
 app.post('/get_update', async (req, res) => {
     const sectors = await req.db.sectors.find({}).lean().exec();
     const seeds = await req.db.seeds.find({}).lean().exec();
@@ -154,13 +199,9 @@ app.post('/get_update', async (req, res) => {
         temp: weather.getDayTemp(currentDay),
         entities: { sectors, seeds }
     };
-    if (req.user) {
-        req.user.regions = await req.db.regions.find({ ownerId: req.user._id }).lean().exec();
-        for(const index in req.user.regions) {
-            req.user.regions[index].sectorsCount = await req.db.sectors.count({ parentRegion: req.user.regions[index]._id});
-        }
+    if (req.user)
         resObject.user = req.user;
-    }
+
     res.json(resObject);
 });
 

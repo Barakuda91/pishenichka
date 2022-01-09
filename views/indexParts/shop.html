@@ -1,0 +1,87 @@
+<div v-show="additional_tab === 'shop'">
+    <div class="card text-center">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs">
+                <li class="nav-item">
+                    <button class="nav-link" aria-current="true" href="#"
+                            v-bind:class="additional_shop_tab === 'fields' ? 'active' : ''"
+                            @click="additional_shop_tab = additional_shop_tab === 'fields' ? null : 'fields'"
+                    >поля</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" href="#"
+                            v-bind:class="additional_shop_tab === 'seeds' ? 'active' : ''"
+                            v-on:click="additional_shop_tab = additional_shop_tab === 'seeds' ? null : 'seeds'"
+                    >семена</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" href="#"
+                            v-bind:class="additional_shop_tab === 'technics' ? 'active' : ''"
+                            v-on:click="additional_shop_tab = additional_shop_tab === 'technics' ? null : 'technics'"
+                    >техника</button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-body" v-show="additional_shop_tab === 'seeds'">
+            <div v-for="(seed, index) in entities.seeds">
+                <div class="row">
+                    <div class="col-sm-3">{{ seed.name }}</div>
+                    <div class="col-sm-2">
+                        <input class="form-control form-control-sm" v-model="seeds_shop[index]" type="number" min="1" value="1" name="cols">
+                    </div>
+                    <div class="col-sm-4">
+                        <button class="btn btn-sm btn-success mb-1" @click="buy_seeds(seed.type, seeds_shop[index]); seeds_shop[index] = null">купить {{ seeds_shop[index] ? $(seed.salePrice * seeds_shop[index]) : 0}} </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body" v-show="additional_shop_tab === 'fields'">
+            <div class="row">
+
+                <div class="col-sm-1 text-small">размер</div>
+                <div class="col-sm-7 text-small">
+                    <div class="row">
+                        <div class="col-sm-2">гараж</div>
+                        <div class="col-sm-2">элеватор</div>
+                        <div class="col-sm-2">полив</div>
+                        <div class="col-sm-3">сборщик</div>
+                        <div class="col-sm-3">удобритель</div>
+                    </div>
+                </div>
+
+                <div class="col-sm-2 text-small">аренда</div>
+                <div class="col-sm-2 text-small">покупка</div>
+            </div>
+            <div v-for="(item, index) in entities.sectors">
+                <div class="row" v-show="!item.ownerId">
+                    <div class="col-sm-1"> {{ item.size }} </div>
+                    <div class="col-sm-7 text-small">
+                        <div class="row" v-if="item.buildings">
+                            <div class="col-sm-2">{{ $(item.buildings.garage.lv) }}</div>
+                            <div class="col-sm-2">{{ $(item.buildings.elevator.lv) }}</div>
+                            <div class="col-sm-2">{{ $(item.buildings.irrigationComplex.lv) }}</div>
+                            <div class="col-sm-3">{{ $(item.buildings.assembler.lv) }}</div>
+                            <div class="col-sm-3">{{ $(item.buildings.emitter.lv) }}</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-2">
+                        <button class="btn btn-sm btn-success mb-1" @click="rent_sector(item._id)"> {{ $(item.rentPrice) }} </button>
+                    </div>
+                    <div class="col-sm-2">
+                        <button class="btn btn-sm btn-success mb-1" @click="buy_sector(item._id)"> {{ $(item.salePrice) }} </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body" v-show="additional_shop_tab === 'technics'">
+            <div v-for="item in entities.seeds">
+                <div class="row">
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

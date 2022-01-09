@@ -1,0 +1,158 @@
+<div v-show="additional_tab === 'regions'">
+    <div class="card text-center">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs">
+                <li class="nav-item">
+                    <button class="nav-link" aria-current="true" href="#"
+                            v-bind:class="additional_regions_tab === 'regions' ? 'active' : ''"
+                            @click="additional_regions_tab = additional_regions_tab === 'regions' ? null : 'regions'"
+                    >регионы</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" aria-current="true" href="#"
+                            v-bind:class="additional_regions_tab === 'sectors' ? 'active' : ''"
+                            @click="additional_regions_tab = additional_regions_tab === 'sectors' ? null : 'sectors'"
+                    >секторы</button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-body" v-show="additional_regions_tab === 'regions'">
+
+            <div class="row">
+                <div class="col-sm-1 text-small"></div>
+                <div class="col-sm-2 text-small">адрес</div>
+                <div class="col-sm-2 text-small">доступно</div>
+                <div class="col-sm-2 text-small">секторов</div>
+                <div class="col-sm-6"></div>
+            </div>
+            <div v-for="(region, i) in regions">
+                <div class="row" style="border-top: 1px solid #b3b3b3; background: #dedede">
+                    <div class="col-sm-1">
+                        <button
+                            class="btn btn-sm mb-1 btn-outline-secondary"
+                            @click="toggleSectorsInRegion(region._id)"
+                        >
+                            {{ region.openTab ? '-' : '+'  }}
+                        </button>
+                    </div>
+                    <div class="col-sm-2">{{ region.position[0] }}-{{ region.position[1] }}</div>
+                    <div class="col-sm-2">{{ region.availableSpace }} Га</div>
+                    <div class="col-sm-2">{{ region.sectors.length }}</div>
+                    <div class="col-sm-5">
+                        <button
+                                class="btn btn-sm btn-secondary mb-1"
+                                @click="createSector(region._id, region.availableSpace)"
+                        >изучить</button>
+                        <button
+                                v-bind:disabled="region.availableSpace <= 0"
+                                class="btn btn-sm btn-success mb-1"
+                                @click="createSector(region._id, region.availableSpace)"
+                        >создать сектор</button>
+                        <button
+                                class="btn btn-sm btn-danger mb-1"
+                                @click="sellRegion(region._id)"
+                        >продать</button>
+                    </div>
+                </div>
+                <div v-if="region.sectors.length && region.openTab" style="color: #6d6d6d">
+                    <div class="row" style="background: #dedede">
+                        <div class="col-sm-1 text-small"></div>
+                        <div class="col-sm-2 text-small">размер</div>
+                        <div class="col-sm-2 text-small">тип</div>
+                        <div class="col-sm-2 text-small">в аренде</div>
+                        <div class="col-sm-5 text-small"></div>
+                    </div>
+                    <div class="row" v-for="sector in region.sectors" style="border-top: 1px solid #cccccc;">
+                        <div class="col-sm-1 text-small"></div>
+                        <div class="col-sm-2 text-small">{{ sector.size }}</div>
+                        <div class="col-sm-2 text-small">{{ _(sector.type) }}</div>
+                        <div class="col-sm-2 text-small">нет</div>
+                        <div class="col-sm-5 text-small" style="text-align: right">
+                            <a class="btn btn-sm btn-danger mb-1" @click="deleteSector(sector._id)">удалить</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body" v-show="additional_regions_tab === 'sectors'">
+
+            <div class="row">
+                <div class="col-sm-1 text-small">адресс</div>
+                <div class="col-sm-1 text-small">размер (га)</div>
+                <div class="col-sm-1 text-small">рост</div>
+                <div class="col-sm-2 text-small">культура</div>
+                <div class="col-sm-2 text-small">урожая</div>
+                <div class="col-sm-5"></div>
+            </div>
+            <div v-for="(sector, id) in user.sectors" class="col-sm-12">
+                <div class="row" style="border-top: 1px solid #b3b3b3;">
+                    <div class="col-sm-1 text-smaller">{{ sector.position[0] }}-{{ sector.position[1] }}</div>
+                    <div class="col-sm-1 text-smaller">{{ sector.crop ? sector.filed : 0}}/{{ sector.size }} </div>
+                    <!--                                <div class="col-sm-2">{{ sector.crop ? sector.crop.currentStateText : 'пусто'}}</div>-->
+                    <div class="col-sm-1"><span class="fw-bold tex">{{ sector.crop ? sector.crop.currentState.toFixed(0) : 0 }}%</span></div>
+                    <div class="col-sm-2 text-smaller">
+                        <a href="#" v-if="!sector.crop" class="btn btn-primary btn-sm" v-on:click="sow_sector(sector._id, sow_sector_type[id], sow_sector_quantity[id])">засеять</a>
+                        <span v-if="sector.crop">{{ sector.crop.name }}</span>
+                    </div>
+                    <div class="col-sm-2 text-smaller"><span class="fw-bold">123558</span></div>
+                    <div class="col-sm-5 text-smaller">
+                        <a href="#" class="btn btn-secondary btn-sm" v-on:click="unrent_sector(sector._id)">улучшения</a>
+
+                        <a href="#" v-show="sector.crop && sector.crop.currentState.toFixed(0) === '100'" class="btn btn-primary btn-sm" v-on:click="harvest_sector(sector._id)">собрать</a>
+                        <a href="#" v-show="sector.crop && sector.crop.currentState.toFixed(0) !== '100'" class="btn btn-danger btn-sm" v-on:click="clear_sector(sector._id)">очистить</a>
+                        <a href="#" v-show="!sector.crop && sector.status === 'PRIVATE'" class="btn btn-success btn-sm" v-on:click="sell_sector(sector._id)">продать</a>
+                        <a href="#" v-show="!sector.crop && sector.status === 'RENT'" class="btn btn-success btn-sm" v-on:click="unrent_sector(sector._id)">вернуть</a>
+
+                        <a href="#" v-show="!sector.crop && sector.status !== 'RENT'" class="btn btn-danger btn-sm" v-on:click="unrent_sector(sector._id)">x</a>
+
+                    </div>
+                    <!--                                <p class="text-xl-start text-small" v-if="sector.establishedPrice">{{ sector.establishedPrice.toFixed(0) }}/год  (до оплаты {{ sector.daysBeforePayment}}) дней</p>-->
+                    <!--                                <div class="row">-->
+                    <!--                                    <div class="col-5">-->
+                    <!--                                        <ul class="list-unstyled mt-3 mb-4">-->
+                    <!--                                            <li>-->
+                    <!--                                                Засеяно: <span class="fw-bold"> {{ sector.crop ? sector.crop.name : 'пусто' }}</span> <span v-show="sector.crop"> / {{ sector.filed }}га</span>-->
+                    <!--                                            </li>-->
+                    <!--                                            <li v-show="sector.crop">-->
+                    <!--                                                Состояние роста: <span class="fw-bold">{{ sector.crop ? sector.crop.currentState.toFixed(0) : 0 }}%</span>-->
+                    <!--                                            </li>-->
+                    <!--                                            <li v-show="sector.crop">-->
+                    <!--                                                Урожая: <span class="fw-bold">{{ sector.crop ? (sector.crop.currentHarvest * sector.filed).toFixed(0) : 0 }}</span>-->
+                    <!--                                            </li>-->
+                    <!--                                            <li v-show="!sector.crop">-->
+                    <!--                                                <div class="input-group mb-3">-->
+                    <!--                                                    <select class="form-select" aria-label="Default select example" v-model="sow_sector_type[id]" class="dropdown-menu" style="width: 115px;">-->
+                    <!--                                                        <option value="wheat" selected="selected">{{ _('wheat')}}</option>-->
+                    <!--                                                        <option value="barley">{{ _('barley')}}</option>-->
+                    <!--                                                        <option value="corn">{{ _('corn')}}</option>-->
+                    <!--                                                    </select>-->
+                    <!--                                                    <input type="number" min="1" v-bind:max="sector.size" v-model="sow_sector_quantity[id]" class="form-control" placeholder="" aria-label="Example text with button addon" aria-describedby="button-addon1">-->
+                    <!--                                                    <span class="input-group-text">{{ user.warehouse.seeds[sow_sector_type[id]] || 0 }}</span>-->
+                    <!--                                                </div>-->
+                    <!--                                            </li>-->
+                    <!--                                        </ul>-->
+
+                    <!--                                    </div>-->
+
+                    <!--                                    <div class="col-4" v-if="sector.buildings">-->
+                    <!--                                        <div>Стоянка техники (lv{{ sector.buildings.garage.lv }})</div>-->
+                    <!--                                        <div>Элеватор (lv{{ sector.buildings.elevator.lv }})</div>-->
+                    <!--                                        <div>Комплекс полива (lv{{ sector.buildings.irrigationComplex.lv }})</div>-->
+                    <!--                                        <div>Автосборщик (lv{{ sector.buildings.assembler.lv }})</div>-->
+                    <!--                                        <div>Автоудобритель (lv{{ sector.buildings.emitter.lv }})</div>-->
+                    <!--                                    </div>-->
+                    <!--                                    <div class="col-3" v-if="sector.buildings">-->
+                    <!--                                        <button class="btn btn-primary btn-sm w-100 mb-1" v-bind:class="sector.status === 'RENT' ? 'disabled' : ''" v-on:click="build(id, 'garage')">Построить {{ $(sectorFactors.sectorGarage[0] * sector.salePrice) }}</button>-->
+                    <!--                                        <button class="btn btn-primary btn-sm w-100 mb-1" v-bind:class="sector.status === 'RENT' ? 'disabled' : ''" v-on:click="build(id, 'elevator')">Построить {{ $(sectorFactors.sectorElevator[0] * sector.salePrice) }}</button>-->
+                    <!--                                        <button class="btn btn-primary btn-sm w-100 mb-1" v-bind:class="sector.status === 'RENT' ? 'disabled' : ''" v-on:click="build(id, 'irrigationComplex')">Построить {{ $(sectorFactors.sectorIrrigationComplex[0] * sector.salePrice) }}</button>-->
+                    <!--                                        <button class="btn btn-primary btn-sm w-100 mb-1" v-bind:class="sector.status === 'RENT' ? 'disabled' : ''" v-on:click="build(id, 'assembler')">Построить {{ $(sectorFactors.sectorAssembler[0] * sector.salePrice) }}</button>-->
+                    <!--                                        <button class="btn btn-primary btn-sm w-100 mb-1" v-bind:class="sector.status === 'RENT' ? 'disabled' : ''" v-on:click="build(id, 'emitter')">Построить {{ $(sectorFactors.sectorEmitter[0] * sector.salePrice) }}</button>-->
+                    <!--                                    </div>-->
+                    <!--                                </div>-->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

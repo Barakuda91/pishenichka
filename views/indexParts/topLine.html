@@ -1,0 +1,14 @@
+<div class="row">
+    <div class="col-sm-2">
+        <span class="fw-bold">{{ day }} день {{ year }} г</span> /
+    </div>
+    <div class="col-sm-3">
+        Текущая температура: <span class="fw-bold">{{ temp }} град</span> /
+    </div>
+    <div class="col-sm-2">
+        Баланс: <span class="fw-bold">{{ balance.toFixed(0) }}</span>
+    </div>
+    <div class="col-sm-2">
+        <button v-on:click="update" class="btn btn-sm btn-outline-primary w-100 mb-1">обновить статус</button>
+    </div>
+</div>
