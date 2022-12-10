@@ -1,0 +1,65 @@
+<script type="text/x-template" id="research_region">
+    <transition name="modal">
+        <div class="modal-mask">
+            <div class="modal-wrapper">
+                <div class="modal-container">
+
+                    <div class="modal-header">
+                        <slot name="header">
+                            <h3 slot="header">новое исследование</h3>
+                        </slot>
+                    </div>
+
+                    <div class="modal-body">
+                        <slot name="body">
+                            <p>Отправив агронова на исследование региона вы можете открыть новые места для ваших секторов.<br />
+                                или узнать больше про вашу землю, её плодородность, грунтовые воды и так далее.</p>
+                            <div class="row">
+                                <div class="col-3">
+                                    Назначить агронома:
+                                </div>
+                                <div class="col-3">
+                                    <div class="input-group mb-3">
+                                        <v-select style="width: inherit;"
+                                            :options="user.agronomists"
+                                            label="fullName"
+                                        ></v-select>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    на исследование
+                                </div>
+                                <div class="col-3">
+                                    <div class="input-group mb-3">
+                                        <v-select style="width: inherit;"
+                                                  v-model="studyType"
+                                                  :options="[
+                                                    {title: 'расширение', type: 'sizing'},
+                                                    {title: 'плодородность',type: 'fertility'},
+                                                    {title: 'геодезия', type: 'geodesy'}
+                                                    ]"
+                                                  label="title"
+                                        ></v-select>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </slot>
+                    </div>
+
+                    <div class="modal-footer">
+                        <slot name="footer">
+                            <button class="modal-default-button" @click="$emit('close')" style="width: 25%;">
+                                отмена
+                            </button>
+                            <button class="modal-default-button" @click="create()" style="width: 25%;">
+                                начать
+                            </button>
+                        </slot>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </transition>
+</script>
+

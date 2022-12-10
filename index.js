@@ -94,9 +94,9 @@ const tickAction = async () => {
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cookieParser());
-app.use(express.static('views/public'));
 app.use(express.static('node_modules/bootstrap/dist'));
 app.use(express.static('node_modules/bootstrap-vue/dist'));
+app.use(express.static('node_modules/vue-select/dist'));
 app.use(express.static('node_modules/vue/dist'));
 app.use(express.static('views/public'));
 app.use(async (req, res, next) => {
@@ -111,10 +111,10 @@ app.use(async (req, res, next) => {
 
     // TODO вынести актуальные цены в отдельную коллекцию, и пересчитывать при обновлении экономики
     req.actualPrices = {};
-    const seeds = await req.db.seeds.find({}).lean().exec();
-    seeds.forEach((seed) => {
-        req.actualPrices[`${seed.type}`] = economy.getPriceFactor(seed.salePrice / HARVEST_PRICE_FACTOR);
-        req.actualPrices[`${seed.type}_seed`] = economy.getPriceFactor(seed.salePrice);
+
+    (await req.db.seeds.find({}).lean().exec()).forEach((seed) => {
+        req.actualPrices[`${seed.type}`] = economy.getActualPrice(seed.salePrice / HARVEST_PRICE_FACTOR);
+        req.actualPrices[`${seed.type}_seed`] = economy.getActualPrice(seed.salePrice);
     });
 
     next();

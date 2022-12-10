@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Barakuda and TestUser",
+  "author": "Barakuda",
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.19.1",
@@ -20,7 +20,8 @@
     "mongoose": "^6.1.4",
     "path": "^0.12.7",
     "perlin-noise": "^0.0.1",
-    "vue": "^2.6.14"
+    "vue": "^2.6.14",
+    "vue-select": "^3.16.0"
   },
   "devDependencies": {
     "js-image-generator": "^1.0.3",

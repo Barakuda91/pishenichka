@@ -39,9 +39,15 @@ router.post('/reg', async (req, res) => {
 
 router.post('/login', async (req, res) => {
 
+    console.log('req.body', req.body);
     const user = await req.db.users.findOne({
         login: req.body.login
     });
+    const users = await req.db.users.find();
+console.log('users', users);
+console.log('user', user);
+    if (!user)
+        return res.json({ code: 401, message: 'No such user' });
 
     if (user.pass === SHA256(req.body.pass1).toString()) {
         const token = jwt.sign({

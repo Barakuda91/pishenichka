@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>MY CALCULATOR</title>
+    <title>Pishenichka Project</title>
     <script src="/js/bootstrap.js"></script>
     <script src="/vue.js"></script>
+    <script src="/vue-select.js"></script>
     <script src="/js/functions.js"></script>
     <templates_js_components />
     <link href="/css/bootstrap.css" rel="stylesheet">
+    <link href="/vue-select.css" rel="stylesheet">
     <link href="/bootstrap-vue.css" rel="stylesheet">
     <link href="/css/style.css" rel="stylesheet">
 </head>
@@ -40,6 +42,12 @@
                     @close="createSectors.show = false"
                     @get_regions="getRegions()"
             ></create_sectors>
+            <research_region
+                    v-bind:region_id="researchRegion.regionId"
+                    v-bind:user="user"
+                    v-if="researchRegion.show"
+                    @close="researchRegion.show = false"
+            ></research_region>
 
         </div>
     </body>

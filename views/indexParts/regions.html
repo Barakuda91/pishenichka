@@ -42,7 +42,7 @@
                     <div class="col-sm-5">
                         <button
                                 class="btn btn-sm btn-secondary mb-1"
-                                @click="createSector(region._id, region.availableSpace)"
+                                @click="researchRegion.show = true"
                         >изучить</button>
                         <button
                                 v-bind:disabled="region.availableSpace <= 0"
