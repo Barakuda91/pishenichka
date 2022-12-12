@@ -1,5 +1,5 @@
 const express = require('express');
-const {HmacSHA256, HmacMD5, SHA256, MD5 } = require("crypto-js");
+const { SHA256 } = require("crypto-js");
 const jwt = require('jsonwebtoken');
 
 const router = express.Router();
@@ -18,7 +18,7 @@ router.post('/reg', async (req, res) => {
     });
 
     if (user)
-        return res.json({ code: 401, text: 'логин занят' });
+        return res.json({ code: 401, message: 'логин занят' });
 
     const created = await req.db.users.create({
         login: req.body.login,
@@ -32,20 +32,17 @@ router.post('/reg', async (req, res) => {
         pass: SHA256(req.body.pass).toString()
     }, 'volvo');
 
-    res
+    return res
         .cookie('auth', token, {maxAge: 60 * 60 * 24 * 1000 * 365, httpOnly: false})
         .json({ code: 200 });
 });
 
 router.post('/login', async (req, res) => {
 
-    console.log('req.body', req.body);
     const user = await req.db.users.findOne({
         login: req.body.login
     });
-    const users = await req.db.users.find();
-console.log('users', users);
-console.log('user', user);
+
     if (!user)
         return res.json({ code: 401, message: 'No such user' });
 
@@ -56,11 +53,11 @@ console.log('user', user);
             pass: SHA256(req.body.pass).toString()
         }, 'volvo');
 
-    res
+        return res
         .cookie('auth', token, { maxAge: 60 * 60 * 24 * 1000 * 365, httpOnly: false })
         .json({ code: 200 });
     } else
-        res.json({ code: 401 });
+        return res.json({ code: 401 });
 });
 
 module.exports = router;

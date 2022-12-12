@@ -35,7 +35,8 @@
                         <div class="input-group mb-3">
                             <input type="number" min="0" v-bind:max="quantity" v-model="sell_harvest_quantity[harvestType]" class="form-control btn-sm ">
                             <button class="btn btn-sm btn-success mb-1" @click="sell_harvest(harvestType, sell_harvest_quantity[harvestType]);">продать {{ (actualPrices[harvestType] * sell_harvest_quantity[harvestType]).toFixed(0) }}</button>
-                            {{actualPrices[harvestType].toFixed(3) }}
+                            {{ actualPrices[harvestType].toFixed(3) }}
+                        </div>
                     </div>
                 </div>
             </div>

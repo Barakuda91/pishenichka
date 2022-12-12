@@ -41,7 +41,7 @@ const db = new DB();
 
 const tickAction = async () => {
 
-    const seeds = await db.seeds.find({}).lean().exec();
+    // const seeds = await db.seeds.find({}).lean().exec();
     const sectors = await db.sectors.find({}).lean().exec();
 
     if (Date.now() >= currentTime + (DAY_DURATION * currentDay)) {
@@ -209,6 +209,6 @@ app.listen(port, async () => {
     await db.init();
     setInterval(async () => {
         await tickAction();
-    }, 350);
+    }, 1050);
     console.log(`Example app listening at http://localhost:${port}`);
 });
