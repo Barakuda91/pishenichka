@@ -2,71 +2,72 @@ const express = require('express');
 const router = express.Router();
 const { messages } = require('../lib/tools');
 
-router.get('/', async (req, res) => {
+module.exports = ({ regionsService, sectorsService, localisation, config }) => {
 
-});
+    router.post('/delete', async (req, res) => {
+        const sector = await sectorsService.getSector(req.body.id);
 
-router.post('/delete', async (req, res) => {
-    const sector = await req.db.sectors.findOne({ _id: req.body.id });
-    if (!sector)
-        return res.json({ code: 403, text: 'Сектор не найден' });
+        if (!sector)
+            return res.json({ code: 403, text: 'Сектор не найден' });
 
-    if (!sector.parentRegion)
-        return res.json({ code: 403, text: 'Сектор не имеет родительского региона' });
+        if (!sector.parentRegion)
+            return res.json({ code: 403, text: 'Сектор не имеет родительского региона' });
 
-    const region = await req.db.regions.findOne({ _id: sector.parentRegion });
+        const region = await regionsService.getRegion(sector.parentRegion);
 
-    if (!region)
-        return res.json({ code: 403, text: 'Регион не найден' });
+        if (!region)
+            return res.json({ code: 403, text: 'Регион не найден' });
 
-    region.availableSpace += sector.size;
-    await req.db.sectors.deleteOne({ _id: req.body.id });
-    await region.save();
-    res.json({ code: 200 });
-});
+        region.availableSpace += sector.size;
 
-router.post('/create', async (req, res) => {
-    console.log(req.body);
-    if (!req.body.id)
-        return res.json({ code: 403, text: 'Не указан целевой регион' });
+        await sectorsService.deleteSector({ _id: req.body.id });
+        await region.save();
 
-    const region = await req.db.regions.findOne({ _id: req.body.id });
+        res.json({ code: 200 });
+    });
 
-    if (!region)
-        return res.json({ code: 403, text: 'Такой регион не найден' });
+    router.post('/create', async (req, res) => {
+        if (!req.body.id)
+            return res.json({ code: 403, text: 'Не указан целевой регион' });
 
-    if (region.ownerId.toString() !== req.user._id.toString())
-        return res.json({ code: 403, text: 'Это не ваш регион' });
+        const region = await regionsService.getRegion(req.body.id);
 
-    let totalSize = 0;
-    req.body.sectors.forEach((sector) => totalSize += Number(sector.size));
+        if (!region)
+            return res.json({ code: 403, text: 'Такой регион не найден' });
 
-    if (totalSize > region.availableSpace)
-        return res.json({ code: 403, text: 'Общая площать секторов больше доступной' });
+        if (region.ownerId.toString() !== req.user._id.toString())
+            return res.json({ code: 403, text: 'Это не ваш регион' });
 
-    for(const sector of req.body.sectors) {
-        const createObj = {
-            size: sector.size,
-            type: sector.type,
-            position: region.position,
-            rentPrice: 250 * sector.size,
-            salePrice: 10500 * sector.size,
-            parentRegion: region._id,
-            status: 'PRIVATE',
-            ownerId: req.user._id
-        };
+        let totalSize = 0;
+        req.body.sectors.forEach((sector) => totalSize += Number(sector.size));
 
-        region.availableSpace -= sector.size;
-        if (sector.separate) {
-            region.totalSpace -= sector.size;
-            createObj.parentRegion = null;
+        if (totalSize > region.availableSpace)
+            return res.json({ code: 403, text: 'Общая площадь секторов больше доступной' });
+
+        for(const sector of req.body.sectors) {
+            const createObj = {
+                size: sector.size,
+                type: sector.type,
+                position: region.position,
+                rentPrice: 250 * sector.size,
+                salePrice: 10500 * sector.size,
+                parentRegion: region._id,
+                status: 'PRIVATE',
+                ownerId: req.user._id
+            };
+
+            region.availableSpace -= sector.size;
+            if (sector.separate) {
+                region.totalSpace -= sector.size;
+                createObj.parentRegion = null;
+            }
+
+            await sectorsService.createSector(createObj);
         }
 
-        await req.db.sectors.create(createObj);
-    }
+        await region.save();
+        res.json({ code: 200 });
+    });
 
-    await region.save();
-    res.json({ code: 200 });
-});
-
-module.exports = router;
+    return router;
+}

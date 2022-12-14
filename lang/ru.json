@@ -1,0 +1,9 @@
+{
+  "BALANCE_WINDROW": "Списано с баланса",
+  "BALANCE_RECEIVED": "Поступило на баланс",
+  "LOGIN_NOT_AVAILABLE": "Логин занят",
+  "PASSWORDS_DO_NOT_MATCH": "Пароли не совпадают",
+  "WRONG_PASSWORD": "Не правильный пароль",
+  "USER_NOT_FOUND": "Пользователь не найден",
+  "WRONG_AUTH_TOKEN": "Ошибка сессии"
+}

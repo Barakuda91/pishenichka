@@ -1,0 +1,7 @@
+{
+  "BALANCE_WINDROW": "Spent",
+  "BALANCE_RECEIVED": "Credited to the balance",
+  "LOGIN_NOT_AVAILABLE": "Login unavailable",
+  "PASSWORDS_DO_NOT_MATCH": "Passwords do not match",
+  "USER_NOT_FOUND": "User is not found"
+}

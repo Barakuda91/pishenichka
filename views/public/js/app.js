@@ -13,8 +13,7 @@ const app = new Vue({
         errorTitle: 'ОШИБКА',
         errorText: null,
         infoModalText: null,
-        day: null,
-        year: null,
+        timeString: '',
         temp: null,
         balance: 0,
         priceFactor: 0,
@@ -74,10 +73,9 @@ const app = new Vue({
         },
         update: async function () {
             const data = await postData('/get_update');
-            // console.log('data', data);
+            console.log('data', data);
             if (data.error) this.startErrorModal(data.error);
-            this.day = data.currentDay;
-            this.year = data.currentYear;
+            this.timeString = data.isoString;
             this.temp = data.temp;
             this.balance = data.user.balance;
             this.entities = data.entities;

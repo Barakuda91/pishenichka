@@ -1,63 +1,56 @@
 const express = require('express');
 const { SHA256 } = require("crypto-js");
-const jwt = require('jsonwebtoken');
 
 const router = express.Router();
 
-const { messages, randomIntFromInterval } = require('../lib/tools');
+const { randomIntFromInterval } = require('../lib/tools');
 
-router.get('/', (req, res) => {
-    res.sendFile('views/auth.html', { root: '/var/www/pishenichka/' });
-});
+module.exports = ({ userService, localisation, config }) => {
 
-router.post('/reg', async (req, res) => {
-    console.log(req.method, req.body);
-
-    const user = await req.db.users.findOne({
-        login: req.body.login
+    // TODO client
+    router.get('/', (req, res) => {
+        res.sendFile('views/auth.html', { root: '/var/www/pishenichka/' });
     });
 
-    if (user)
-        return res.json({ code: 401, message: 'логин занят' });
+    router.post('/registration', async (req, res) => {
+        const { login, password1, password2 } = req.body;
+        const _ = localisation(config.defaultLang);
 
-    const created = await req.db.users.create({
-        login: req.body.login,
-        balance: randomIntFromInterval(10000, 30000),
-        pass: SHA256(req.body.pass).toString()
-    });
+        const user = await userService.findUserByLogin(login);
 
-    const token = jwt.sign({
-        _id: created._id,
-        login: req.body.login,
-        pass: SHA256(req.body.pass).toString()
-    }, 'volvo');
+        if (user)
+            return res.json({ code: 401, message: _('LOGIN_NOT_AVAILABLE') });
 
-    return res
-        .cookie('auth', token, {maxAge: 60 * 60 * 24 * 1000 * 365, httpOnly: false})
-        .json({ code: 200 });
-});
+        if (password1 !== password2)
+            return res.json({ code: 401, message: _('PASSWORDS_DO_NOT_MATCH') });
 
-router.post('/login', async (req, res) => {
-
-    const user = await req.db.users.findOne({
-        login: req.body.login
-    });
-
-    if (!user)
-        return res.json({ code: 401, message: 'No such user' });
-
-    if (user.pass === SHA256(req.body.pass1).toString()) {
-        const token = jwt.sign({
-            _id: user._id,
-            login: req.body.login,
-            pass: SHA256(req.body.pass).toString()
-        }, 'volvo');
+        const newUser = await userService.createUser({
+            login,
+            balance: randomIntFromInterval(10000, 30000),
+            pass: userService.makePass(password1)
+        });
 
         return res
-        .cookie('auth', token, { maxAge: 60 * 60 * 24 * 1000 * 365, httpOnly: false })
-        .json({ code: 200 });
-    } else
-        return res.json({ code: 401 });
-});
+            .cookie('auth', userService.getUserToken(newUser), { maxAge: config.cookieMaxAge, httpOnly: false})
+            .json({ code: 200 });
+    });
 
-module.exports = router;
+    router.post('/login', async (req, res) => {
+        const { login, password } = req.body;
+        const _ = localisation(config.defaultLang);
+
+        const user = await userService.findUserByLogin(login);
+
+        if (!user)
+            return res.json({ code: 401, message: _('USER_NOT_FOUND') });
+
+        if (user.pass !== userService.makePass(password))
+            return res.json({ code: 401, message: _('WRONG_PASSWORD') });
+
+        return res
+            .cookie('auth', userService.getUserToken(user), { maxAge: config.cookieMaxAge, httpOnly: false })
+            .json({ code: 200 });
+    });
+
+    return router;
+}

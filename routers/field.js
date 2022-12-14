@@ -5,155 +5,160 @@ const Plant = require('../lib/entities/Plant');
 
 const { messages } = require('../lib/tools');
 
-router.post('/sow', async (req, res) => {
-    const field = await req.db.sectors.findOne({ _id: req.body.id });
-    const user = await req.db.users.findOne({ _id: req.user._id });
+module.exports = ({ sectorsService, userService, seedsService, plantService, economy, localisation, config }) => {
 
-    if (field.ownerId.toString() !== user._id.toString())
-        return res.json({ error: 'Это не ваше поле' });
+    router.post('/sow', async (req, res) => {
 
-    const seed = await req.db.seeds.findOne({ type: req.body.seedType }).lean().exec();
+        const field = await sectorsService.getSector(req.body.id);
+        const user = await userService.getUser(req.user._id);
 
-    if (!seed)
-        return res.json({ error: 'Не правильно указан тип семян' });
+        if (field.ownerId.toString() !== user._id.toString())
+            return res.json({ error: 'Это не ваше поле' });
 
-    if (req.body.quantity > field.size)
-        req.body.quantity = field.size;
+        const seed = await seedsService.findSeedByType(req.body.seedType);
 
-    if (req.user.warehouse.seeds[seed.type] < req.body.quantity)
-        return res.json({ error: 'Не хватает семян' });
+        if (!seed)
+            return res.json({ error: 'Не правильно указан тип семян' });
 
-    const plantInstance = (new Plant())
-        .create(await req.db.plants.findOne({ seedType: seed.type }));
-    field.crop = plantInstance.saveToFile();
+        if (req.body.quantity > field.size)
+            req.body.quantity = field.size;
 
-    user.warehouse.seeds[seed.type] -= req.body.quantity;
-    field.filed = req.body.quantity;
+        if (req.user.warehouse.seeds[seed.type] < req.body.quantity)
+            return res.json({ error: 'Не хватает семян' });
 
-    await user.save();
-    user.markModified('warehouse');
-    await field.save();
-});
+        const ed = await plantService.getPlantBySeedType(seed.type);
+        const plantInstance = (new Plant())
+            .create(ed);
 
-router.post('/harvest', async (req, res) => {
-    const field = await req.db.sectors.findOne({ _id: req.body.id });
+        field.crop = plantInstance.saveToFile();
 
-    if (field.ownerId.toString() !== req.user._id.toString())
-        return res.json({ error: 'Это не ваше поле' });
+        user.warehouse.seeds[seed.type] -= req.body.quantity;
+        field.filed = req.body.quantity;
 
-    if (!field.crop)
-        return res.json({ error: 'Это поле не засеяно' });
+        await user.save();
+        user.markModified('warehouse');
+        await field.save();
+    });
 
-    if (field.crop.period !== 'AGING')
-        return res.json({ error: 'Урожай не созрел' });
+    router.post('/harvest', async (req, res) => {
+        const field = await sectorsService.getSector(req.body.id);
 
-    // if (!user.warehouse)
-    //     user.warehouse = { harvest: {}, };
-    //
-    // if (!user.warehouse.harvest[field.crop.seedType])
-    //     user.warehouse.harvest[field.crop.seedType] = 0;
+        if (field.ownerId.toString() !== req.user._id.toString())
+            return res.json({ error: 'Это не ваше поле' });
 
-    const amount = field.crop.currentHarvest * field.filed;
+        if (!field.crop)
+            return res.json({ error: 'Это поле не засеяно' });
 
-    req.user.warehouse.harvest[field.crop.seedType] += amount;
-    field.crop = null;
+        if (field.crop.period !== 'AGING')
+            return res.json({ error: 'Урожай не созрел' });
 
-    await req.db.users.updateOne({ _id: req.user._id }, { $set: { 'warehouse.harvest': req.user.warehouse.harvest }});
+        // if (!user.warehouse)
+        //     user.warehouse = { harvest: {}, };
+        //
+        // if (!user.warehouse.harvest[field.crop.seedType])
+        //     user.warehouse.harvest[field.crop.seedType] = 0;
 
-    await field.save();
+        const amount = field.crop.currentHarvest * field.filed;
 
-    res.json({ code: 200, text: `Урожай собран` });
-});
+        req.user.warehouse.harvest[field.crop.seedType] += amount;
+        field.crop = null;
 
-router.post('/clear', async (req, res) => {
-    const field = await req.db.sectors.findOne({ _id: req.body.id });
+        await userService.updateUser(req.user._id, { $set: { 'warehouse.harvest': req.user.warehouse.harvest }});
+        await field.save();
 
-    if (field.ownerId.toString() !== req.user._id.toString())
-        return res.json({ error: 'Это не ваше поле' });
+        res.json({ code: 200, text: `Урожай собран` });
+    });
 
-    field.crop = null;
+    router.post('/clear', async (req, res) => {
+        const field = await sectorsService.getSector(req.body.id);
 
-    await field.save();
+        if (field.ownerId.toString() !== req.user._id.toString())
+            return res.json({ error: 'Это не ваше поле' });
 
-    res.json({ code: 200, text: 'Поле очищено' });
-});
+        field.crop = null;
 
-router.post('/unrent', async (req, res) => {
-    const field = await req.db.sectors.findOne({ _id: req.body.id });
+        await field.save();
 
-    if (field.ownerId.toString() !== req.user._id.toString())
-        return res.json({ error: 'Это не ваше поле' });
+        res.json({ code: 200, text: 'Поле очищено' });
+    });
 
-    field.ownerId = null;
-    field.status = 'EMPTY';
-    field.daysBeforePayment = null;
+    router.post('/unrent', async (req, res) => {
+        const field = await sectorsService.getSector(req.body.id);
 
-    await field.save();
+        if (field.ownerId.toString() !== req.user._id.toString())
+            return res.json({ error: 'Это не ваше поле' });
 
-    res.json({ code: 200, text: 'Поле больше не в аренде' });
-});
+        field.ownerId = null;
+        field.status = 'EMPTY';
+        field.daysBeforePayment = null;
 
-router.post('/rent', async (req, res) => {
-    const field = await req.db.sectors.findOne({ _id: req.body.id });
-    const user = await req.db.users.findOne({ _id: req.user._id });
+        await field.save();
 
-    const price = req.economy.getActualPrice(field.rentPrice);
+        res.json({ code: 200, text: 'Поле больше не в аренде' });
+    });
 
-    if (field.ownerId)
-        return res.json({ error: 'Это поле занято' });
-    if (price > req.user.balance)
-        return res.json({ error: 'У вас не достаточно денег' });
+    router.post('/rent', async (req, res) => {
+        const field = await sectorsService.getSector(req.body.id);
+        const user = await userService.getUser(req.user._id);
 
-    user.balance -= price;
-    field.ownerId = req.user._id;
-    field.establishedPrice = price;
-    field.status = 'RENT';
-    field.daysBeforePayment = 365;
+        const price = economy.getActualPrice(field.rentPrice);
 
-    await field.save();
-    await user.save();
+        if (field.ownerId)
+            return res.json({ error: 'Это поле занято' });
+        if (price > req.user.balance)
+            return res.json({ error: 'У вас не достаточно денег' });
 
-    res.json({ code: 200, texts: [messages.textSpent(price), 'Арендовано новое поле']});
-});
+        user.balance -= price;
+        field.ownerId = req.user._id;
+        field.establishedPrice = price;
+        field.status = 'RENT';
+        field.daysBeforePayment = 365;
 
-router.post('/buy', async (req, res) => {
-    const field = await req.db.sectors.findOne({ _id: req.body.id });
-    const user = await req.db.users.findOne({ _id: req.user._id });
-    const price = req.economy.getActualPrice(field.salePrice);
+        await field.save();
+        await user.save();
 
-    if (field.ownerId)
-        return res.json({ error: 'Это поле занято' });
+        res.json({ code: 200, texts: [messages.textSpent(price), 'Арендовано новое поле']});
+    });
 
-    if (price > user.balance)
-        return res.json({ error: 'У вас не достаточно денег' });
+    router.post('/buy', async (req, res) => {
+        const field = await sectorsService.getSector(req.body.id);
+        const user = await userService.getUser(req.user._id);
+        const price = economy.getActualPrice(field.salePrice);
 
-    user.balance -= price;
-    field.ownerId = user._id;
-    field.status = 'BOUGHT';
-    field.type = 'FIELD';
+        if (field.ownerId)
+            return res.json({ error: 'Это поле занято' });
 
-    await field.save();
-    await user.save();
+        if (price > user.balance)
+            return res.json({ error: 'У вас не достаточно денег' });
 
-    res.json({ code: 200, text: messages.textSpent(price) });
-});
+        user.balance -= price;
+        field.ownerId = user._id;
+        field.status = 'BOUGHT';
+        field.type = 'FIELD';
 
-router.post('/sell', async (req, res) => {
-    const field = await req.db.sectors.findOne({ _id: req.body.id });
-    const user = await req.db.users.findOne({ _id: req.user._id });
-    const price = req.economy.getActualPrice(field.salePrice);
+        await field.save();
+        await user.save();
 
-    if (field.ownerId.toString() !== user._id.toString())
-        return res.json({ error: 'Это не ваше поле' });
+        res.json({ code: 200, text: messages.textSpent(price) });
+    });
 
-    user.balance += price;
-    field.owner = null;
-    field.status = null;
+    router.post('/sell', async (req, res) => {
+        const field = await sectorsService.getSector(req.body.id);
+        const user = await userService.getUser(req.user._id);
+        const price = economy.getActualPrice(field.salePrice);
 
-    await field.save();
-    await user.save();
+        if (field.ownerId.toString() !== user._id.toString())
+            return res.json({ error: 'Это не ваше поле' });
 
-    res.json({ code: 200, text: messages.textReceived(price)});
-});
+        user.balance += price;
+        field.owner = null;
+        field.status = null;
 
-module.exports = router;
+        await field.save();
+        await user.save();
+
+        res.json({ code: 200, text: messages.textReceived(price)});
+    });
+
+    return router;
+}

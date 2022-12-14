@@ -27,7 +27,7 @@
                             Засеяно: <span class="fw-bold"> {{ sector.crop.name }}</span> / {{ sector.filed }}га
                         </div>
                         <div class="col-sm-12">
-                            Состояние роста: <span class="fw-bold">{{ sector.crop ? sector.crop.currentState.toFixed(0) : 0 }}%</span>
+                            Процесс: <span class="fw-bold">{{ sector.crop ? sector.crop.currentState.toFixed(0) : 0 }}%</span>
                         </div>
                         <div class="col-sm-6">
                             Урожая: <span class="fw-bold">{{ sector.crop ? (sector.crop.currentHarvest * sector.filed).toFixed(0) : 0 }}</span>

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>MY CALCULATOR</title>
+    <title>GAME</title>
     <script src="/js/bootstrap.js"></script>
     <script src="/vue.js"></script>
     <script src="/js/functions.js"></script>
@@ -34,7 +34,7 @@
                                         </div>
 
                                         <div class="form-outline mb-4">
-                                            <input type="password" id="form2Example22" v-model="auth.pass" class="form-control" />
+                                            <input type="password" id="form2Example22" v-model="auth.password" class="form-control" />
                                             <label class="form-label" for="form2Example22">Пароль</label>
                                         </div>
 
@@ -53,17 +53,17 @@
                                         <p>Создать аккаунт</p>
 
                                         <div class="form-outline mb-4">
-                                            <input type="email" class="form-control" v-model="reg.login"placeholder="Телефон"/>
+                                            <input type="email" class="form-control" v-model="registration.login"placeholder="Телефон"/>
                                             <label class="form-label" for="form2Example11">Логин</label>
                                         </div>
 
                                         <div class="form-outline mb-4">
-                                            <input type="password" class="form-control" v-model="reg.pass1"/>
+                                            <input type="password" class="form-control" v-model="registration.password1"/>
                                             <label class="form-label" for="form2Example22">Пароль</label>
                                         </div>
 
                                         <div class="form-outline mb-4">
-                                            <input type="password" class="form-control" v-model="reg.pass2"/>
+                                            <input type="password" class="form-control" v-model="registration.password2"/>
                                             <label class="form-label" for="form2Example22">Пароль снова</label>
                                         </div>
 
@@ -98,8 +98,8 @@
         el: '#app',
         data: {
             type: 'auth',
-            auth: {login: null, pass: null},
-            reg: {login: null, pass1: null, pass2: null}
+            auth: { login: null, password: null },
+            registration: { login: null, password1: null, password2: null }
         },
         async beforeMount(){
 
@@ -112,7 +112,7 @@
                     window.location.replace("/");
             },
             async goReg() {
-                const res = await postData('/auth/reg', this.reg );
+                const res = await postData('/auth/registration', this.registration );
                 console.log(res);
                 if (res.code === 200)
                     window.location.replace("/");
