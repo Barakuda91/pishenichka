@@ -7,37 +7,41 @@ const { messages } = require('../lib/tools');
 
 module.exports = ({ sectorsService, userService, seedsService, plantService, economy, localisation, config }) => {
 
-    router.post('/sow', async (req, res) => {
+    router.post('/sow', async (req, res, next) => {
 
-        const field = await sectorsService.getSector(req.body.id);
-        const user = await userService.getUser(req.user._id);
+        try {
+            const field = await sectorsService.getSector(req.body.id);
+            const user = await userService.getUser(req.user._id);
 
-        if (field.ownerId.toString() !== user._id.toString())
-            return res.json({ error: 'Это не ваше поле' });
+            if (field.ownerId.toString() !== user._id.toString())
+                return res.json({error: 'Это не ваше поле'});
 
-        const seed = await seedsService.findSeedByType(req.body.seedType);
+            const seed = await seedsService.findSeedByType(req.body.seedType);
 
-        if (!seed)
-            return res.json({ error: 'Не правильно указан тип семян' });
+            if (!seed)
+                return res.json({error: 'Не правильно указан тип семян'});
 
-        if (req.body.quantity > field.size)
-            req.body.quantity = field.size;
+            if (req.body.quantity > field.size)
+                req.body.quantity = field.size;
 
-        if (req.user.warehouse.seeds[seed.type] < req.body.quantity)
-            return res.json({ error: 'Не хватает семян' });
+            if (req.user.warehouse.seeds[seed.type] < req.body.quantity)
+                return res.json({error: 'Не хватает семян'});
 
-        const ed = await plantService.getPlantBySeedType(seed.type);
-        const plantInstance = (new Plant())
-            .create(ed);
+            const ed = await plantService.getPlantBySeedType(seed.type);
+            const plantInstance = (new Plant())
+                .create(ed);
 
-        field.crop = plantInstance.saveToFile();
+            field.crop = plantInstance.saveToFile();
 
-        user.warehouse.seeds[seed.type] -= req.body.quantity;
-        field.filed = req.body.quantity;
+            user.warehouse.seeds[seed.type] -= req.body.quantity;
+            field.filed = req.body.quantity;
 
-        await user.save();
-        user.markModified('warehouse');
-        await field.save();
+            await user.save();
+            user.markModified('warehouse');
+            await field.save();
+        } catch (e) {
+            next(e);
+        }
     });
 
     router.post('/harvest', async (req, res) => {

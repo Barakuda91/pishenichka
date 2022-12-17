@@ -24,14 +24,17 @@ async function configureContainer () {
         sectors: asValue(db.sectors),
         seeds: asValue(db.seeds),
         world: asValue(db.world),
+        products: asValue(db.products),
+        productions: asValue(db.productions),
+        productions_list: asValue(db.productions_list),
 
         // routers
         authRouter: asFunction(require('../routers/auth')),
         fieldRouter: asFunction(require('../routers/field')),
-        harvestRouter: asFunction(require('../routers/harvest')),
-        seedsRouter: asFunction(require('../routers/seeds')),
         regionsRouter: asFunction(require('../routers/regions')),
         sectorsRouter: asFunction(require('../routers/sectors')),
+        productionRouter: asFunction(require('../routers/production')),
+        productRouter: asFunction(require('../routers/product')),
 
         // services
         userService: asFunction(require('../services/userService')),
@@ -40,6 +43,9 @@ async function configureContainer () {
         seedsService: asFunction(require('../services/seedsService')),
         regionsService: asFunction(require('../services/regionsService')),
         plantService: asFunction(require('../services/plantService')),
+        productService: asFunction(require('../services/productService')),
+        productionService: asFunction(require('../services/productionService')),
+        productionListService: asFunction(require('../services/productionListService')),
 
         tickUpdate: asFunction(require('../lib/tickUpdate')),
 

@@ -36,6 +36,7 @@
             <div class="alert alert-danger" role="alert" v-show="errorText">
                 {{ errorText }}
             </div>
+
             <create_sectors
                     v-bind:region_id="createSectors.regionId"
                     v-bind:available_space="createSectors.availableSpace"
@@ -43,6 +44,26 @@
                     @close="createSectors.show = false"
                     @get_regions="getRegions()"
             ></create_sectors>
+
+            <edit_productions
+                    v-bind:sector_id="editProductions.sectorId"
+                    v-bind:production="editProductions.production"
+                    v-bind:user="user"
+                    v-bind:_="_"
+                    v-if="editProductions.show"
+                    @close="editProductions.show = false"
+                    @get_regions="getRegions()"
+            ></edit_productions>
+
+            <build_on_sectors
+                    v-bind:sector_id="buildOnSectors.sectorId"
+                    v-bind:balance="balance"
+                    v-bind:_="_"
+                    v-if="buildOnSectors.show"
+                    @close="buildOnSectors.show = false"
+                    @get_regions="getRegions()"
+            ></build_on_sectors>
+
             <research_region
                     v-bind:region_id="researchRegion.regionId"
                     v-bind:user="user"

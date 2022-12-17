@@ -3,25 +3,25 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 const jwt = require("jsonwebtoken");
-// const authRouter = require("../routers/auth");
-// const fieldRouter = require("../routers/field");
-// const harvestRouter = require("../routers/harvest");
-// const seedsRouter = require("../routers/seeds");
-// const regionsRouter = require("../routers/regions");
-// const sectorsRouter = require("../routers/sectors");
 const fs = require("fs-extra");
-
+const translator = {
+    ru: require('../lang/ru.json'),
+    en: require('../lang/en.json')
+};
 module.exports = ({
                       authRouter,
                       fieldRouter,
-                      harvestRouter,
-                      seedsRouter,
                       regionsRouter,
                       sectorsRouter,
+                      productRouter,
+                      productionRouter,
 
                       userService,
                       sectorsService,
                       seedsService,
+                      productService,
+                      productionService,
+                      productionListService,
 
                       localisation,
                       economy,
@@ -30,8 +30,7 @@ module.exports = ({
                       tickUpdate
                   }) => {
 
-    setInterval(tickUpdate.tick, 1000)
-    const HARVEST_PRICE_FACTOR = 712;
+    setInterval(tickUpdate.tick, tickUpdate.getTickDuration())
 
     const app = express();
 
@@ -62,7 +61,15 @@ module.exports = ({
 
             req.user = user;
             req.user.sectors = await sectorsService.getUserSectors(user._id);
-            console.log();
+
+            // заполняем список производств
+            for (const sector of req.user.sectors) {
+                if (sector.type === 'BUILD' && !sector.isFree) {
+                    sector.production = await productionService.findProductionBySector(sector._id);
+                    if (sector.production)
+                        sector.production.entity = await productionListService.findProductionByName(sector.production.productionName);
+                }
+            }
         }
 
         // req.economy = economy;
@@ -70,9 +77,8 @@ module.exports = ({
         // TODO вынести актуальные цены в отдельную коллекцию, и пересчитывать при обновлении экономики
         req.actualPrices = {};
 
-        (await seedsService.getSeeds()).forEach((seed) => {
-            req.actualPrices[`${seed.type}`] = economy.getActualPrice(seed.salePrice / HARVEST_PRICE_FACTOR);
-            req.actualPrices[`${seed.type}_seed`] = economy.getActualPrice(seed.salePrice);
+        (await productService.findProducts()).forEach((product) => {
+            req.actualPrices[product.name] = economy.getActualPrice( product.baseSellPrice );
         });
 
         next();
@@ -80,10 +86,12 @@ module.exports = ({
 
     app.use('/auth', authRouter);
     app.use('/field', fieldRouter);
-    app.use('/harvest', harvestRouter);
-    app.use('/seeds', seedsRouter);
+    //app.use('/harvest', harvestRouter);
+    //app.use('/seeds', seedsRouter);
     app.use('/regions', regionsRouter);
     app.use('/sectors', sectorsRouter);
+    app.use('/product', productRouter);
+    app.use('/production', productionRouter);
 
     app.get('*', async (req, res, next) => {
         res.sendFile = async (filePath, ops) => {
@@ -147,17 +155,22 @@ module.exports = ({
         });
     });
 
+    app.post('/get_lang', async (req, res) => {
+        res.json({ code: 200, data: translator[req.body.lang || 'ru'] });
+    });
+
     app.post('/get_update', async (req, res) => {
 
         const times = tickUpdate.getInfo();
         const sectors = await sectorsService.getUserSectors(req.user._id);
-        const seeds = await seedsService.getSeeds();
+        const products = await productService.findProducts();
+
         const resObject = {
             actualPrices: req.actualPrices,
             priceFactor: economy.getPriceFactor(),
             ...times,
             temp: weather.getDayTemp(times.currentDay),
-            entities: { sectors, seeds }
+            entities: { sectors, products }
         };
 
         if (req.user) {
@@ -167,6 +180,13 @@ module.exports = ({
 
         res.json(resObject);
     });
+
+    app.use((err, req, res, next) => {
+        console.error(err.stack)
+        res.status(500).json({
+            error: 'Server error'
+        });
+    })
 
     return app;
 }

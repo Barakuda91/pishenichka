@@ -45,7 +45,7 @@
                                 <option value="corn">{{ _('corn')}}</option>
                             </select>
                             <input type="number" min="1" v-bind:max="sector.size" v-model="sow_sector_quantity[id]" class="form-control" placeholder="" aria-label="Example text with button addon" aria-describedby="button-addon1">
-                            <span class="input-group-text">{{ user.warehouse.seeds[sow_sector_type[id]] || 0 }}</span>
+                            <span class="input-group-text">user.warehouse.seeds[sow_sector_type[id]] || 0 </span>
                         </div>
                     </div>
                     <div class="row">

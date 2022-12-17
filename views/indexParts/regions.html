@@ -30,8 +30,8 @@
                 <div class="row" style="border-top: 1px solid #b3b3b3; background: #dedede">
                     <div class="col-sm-1">
                         <button
-                            class="btn btn-sm mb-1 btn-outline-secondary"
-                            @click="toggleSectorsInRegion(region._id)"
+                                class="btn btn-sm mb-1 btn-outline-secondary"
+                                @click="toggleSectorsInRegion(region._id)"
                         >
                             {{ region.openTab ? '-' : '+'  }}
                         </button>
@@ -79,24 +79,37 @@
         <div class="card-body" v-show="additional_regions_tab === 'sectors'">
 
             <div class="row">
-                <div class="col-sm-1 text-small">адресс</div>
-                <div class="col-sm-1 text-small">размер (га)</div>
-                <div class="col-sm-1 text-small">рост</div>
-                <div class="col-sm-2 text-small">культура</div>
-                <div class="col-sm-2 text-small">урожая</div>
+                <div class="col-sm-1 text-small">{{ _('ADDRESS') }}</div>
+                <div class="col-sm-1 text-small">{{ _('SIZE_GA') }}</div>
+                <div class="col-sm-1 text-small">{{ _('PROGRESS') }}</div>
+                <div class="col-sm-2 text-small">{{ _('TYPE') }}</div>
+                <div class="col-sm-2 text-small">{{ _('INCOME') }}</div>
                 <div class="col-sm-5"></div>
             </div>
             <div v-for="(sector, id) in user.sectors" class="col-sm-12">
                 <div class="row" style="border-top: 1px solid #b3b3b3;">
                     <div class="col-sm-1 text-smaller">{{ sector.position[0] }}-{{ sector.position[1] }}</div>
                     <div class="col-sm-1 text-smaller">{{ sector.crop ? sector.filed : 0}}/{{ sector.size }} </div>
-                    <!--                                <div class="col-sm-2">{{ sector.crop ? sector.crop.currentStateText : 'пусто'}}</div>-->
                     <div class="col-sm-1"><span class="fw-bold tex">{{ sector.crop ? sector.crop.currentState.toFixed(0) : 0 }}%</span></div>
                     <div class="col-sm-2 text-smaller">
-                        <a href="#" v-if="!sector.crop" class="btn btn-primary btn-sm" v-on:click="sow_sector(sector._id, sow_sector_type[id], sow_sector_quantity[id])">засеять</a>
-                        <span v-if="sector.crop">{{ sector.crop.name }}</span>
+                        <span v-if="sector.type !== 'BUILD'">{{ _(sector.type) }}</span>
+                        <a
+                                href="#"
+                                v-else-if="sector.type === 'BUILD' && sector.production"
+                                class="btn btn-primary btn-sm"
+                                v-on:click="editProduction(sector._id, sector.production)">
+                            {{ _(sector.production.entity.title) }}
+                        </a>
+                        <a
+                                href="#"
+                                v-else-if="sector.type === 'BUILD' && !sector.production"
+                                class="btn btn-primary btn-sm"
+                                v-on:click="buildOnSector(sector._id)">
+                            {{ _('BUILD') }}
+                        </a>
+                        <span v-else>{{ sector.type }}</span>
                     </div>
-                    <div class="col-sm-2 text-smaller"><span class="fw-bold">123558</span></div>
+                    <div class="col-sm-2 text-smaller"><span class="fw-bold">{{ Math.round(Math.random() * 10000) }}</span></div>
                     <div class="col-sm-5 text-smaller">
                         <a href="#" class="btn btn-secondary btn-sm" v-on:click="unrent_sector(sector._id)">улучшения</a>
 

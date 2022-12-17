@@ -1,37 +1,3 @@
 <div v-show="additional_tab === 'fields'">
-    <div class="card text-center">
-        <div class="card-header">
-            <ul class="nav nav-tabs card-header-tabs">
-                <li class="nav-item">
-                    <button class="nav-link" aria-current="true" href="#"
-                            v-bind:class="additional_regions_tab === 'regions' ? 'active' : ''"
-                            @click="additional_regions_tab = additional_regions_tab === 'regions' ? null : 'regions'"
-                    >поля</button>
-                </li>
-                <li class="nav-item">
-                    <button class="nav-link" aria-current="true" href="#"
-                            v-bind:class="additional_regions_tab === 'sectors' ? 'active' : ''"
-                            @click="additional_regions_tab = additional_regions_tab === 'sectors' ? null : 'sectors'"
-                    >виноградники</button>
-                </li>
-                <li class="nav-item">
-                    <button class="nav-link" aria-current="true" href="#"
-                            v-bind:class="additional_regions_tab === 'sectors' ? 'active' : ''"
-                            @click="additional_regions_tab = additional_regions_tab === 'sectors' ? null : 'sectors'"
-                    >сады</button>
-                </li>
-            </ul>
-        </div>
 
-        <div class="row">
-            <div v-for="(sector, id) in user.sectors" class="col-sm-12">
-                <field
-                        v-bind:sector="sector"
-                        v-bind:id="id"
-                        v-bind:user="user"
-                        v-bind:_="_"
-                ></field>
-            </div>
-        </div>
-    </div>
 </div>

@@ -13,25 +13,20 @@
                     <div class="modal-body">
                         <slot name="body">
                             <p>вы можете разделить ваш регион на сектора. минимальный размер сектора - 1га.<br />
-                                если вы оградите сектор - он не будет считатьс дочерним сектором данного региона, и его можно будет продать.</p>
+                                если вы оградите сектор - он не будет считаться дочерним сектором данного региона, и его можно будет продать.</p>
 
                             <div class="input-group mb-3" v-for="(n, i) in sectors">
                                 <select @change="check()" class="form-select form-select-sm" v-model="sectors[i].type" aria-label=".form-select-sm example">
-                                    <option disabled selected="selected">тип сектора</option>
-                                    <option value="FIELD">поле</option>
+                                    <option value="first" disabled>тип сектора</option>
+                                    <option value="FIELD" selected="selected">поле</option>
                                     <option value="VINEYARD">виноградник</option>
-                                    <option value="GARDEN">сад</option>
+                                    <option value="GARDEN">огород</option>
+                                    <option value="ORCHARD">сад</option>
+                                    <option value="CORRAL">загон</option>
                                     <option style="font-size: 1pt; background-color: rgba(0,0,0,0.33);" disabled>&nbsp;</option>
                                     <option value="WAREHOUSE">склад</option>
-                                    <option value="ELEVATOR">элеватор</option>
-                                    <option value="WELL">скважина</option>
-                                    <option value="GARAGE">гараж</option>
                                     <option style="font-size: 1pt; background-color: rgba(0,0,0,0.33);" disabled>&nbsp;</option>
-                                    <option value="WINERY">винный завод</option>
-                                    <option value="BREWERY">пивоварня</option>
-                                    <option value="DISTILLERY">вискикурня</option>
-                                    <option style="font-size: 1pt; background-color: rgba(0,0,0,0.33);" disabled>&nbsp;</option>
-                                    <option value="BAKERY">хлебзавод</option>
+                                    <option value="BUILD">земля под застройку</option>
                                 </select>
                                 <input @change="check()" type="number" min="1" v-bind:max="available_space" v-model="sectors[i].size" placeholder="размер га" class="form-control" aria-describedby="button-addon1">
                                 <div class="form-check" style="margin: 8px">

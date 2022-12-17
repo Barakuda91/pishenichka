@@ -5,42 +5,36 @@
                     @click="additional_tab = additional_tab === 'regions' ? null : 'regions'; getRegions();"
                     v-bind:class="additional_tab === 'regions' ? 'btn-primary' : 'btn-outline-primary'"
                     class="btn btn-sm w-100 mb-1"
-            >реестр</button>
+            >{{ _('REGISTRY') }}</button>
         </li>
         <li>
-            <button
-                    @click="additional_tab = additional_tab === 'fields' ? null : 'fields'"
-                    v-bind:class="additional_tab === 'fields' ? 'btn-primary' : 'btn-outline-primary'"
-                    class="btn btn-sm w-100 mb-1"
-            >поля</button>
+        <button
+                @click="additional_tab = additional_tab === 'production' ? null : 'production'"
+                v-bind:class="additional_tab === 'production' ? 'btn-primary' : 'btn-outline-primary'"
+                class="btn btn-sm w-100 mb-1"
+        >{{ _('PRODUCTION') }}</button>
         </li>
         <li>
             <button
                     v-on:click="additional_tab = additional_tab === 'transport' ? null : 'transport'"
                     v-bind:class="additional_tab === 'transport' ? 'btn-primary' : 'btn-outline-primary'"
                     class="btn btn-sm btn-outline-primary w-100 mb-1"
-            >техника</button>
+            >{{ _('TRANSPORT') }}</button>
         </li>
         <li>
             <button
                     v-on:click="additional_tab = additional_tab === 'warehouse' ? null : 'warehouse'; update_warehouse_values();"
                     v-bind:class="additional_tab === 'warehouse' ? 'btn-primary' : 'btn-outline-primary'"
                     class="btn btn-sm btn-outline-primary w-100 mb-1"
-            >склады</button>
+            >{{ _('WAREHOUSES') }}</button>
         </li>
         <li>
-            <button
-                    @click="additional_tab = additional_tab === 'production' ? null : 'production'"
-                    v-bind:class="additional_tab === 'production' ? 'btn-primary' : 'btn-outline-primary'"
-                    class="btn btn-sm w-100 mb-1"
-            >производства</button>
-        </li>
         <li>
             <button
                     v-on:click="additional_tab = additional_tab === 'shop' ? null : 'shop'"
                     v-bind:class = "additional_tab === 'shop' ? 'btn-primary' : 'btn-outline-primary'"
                     class="btn btn-sm btn-outline-primary w-100 mb-1"
-            >магазин</button>
+            >{{ _('SCORE') }}</button>
         </li>
     </ul>
 </div>

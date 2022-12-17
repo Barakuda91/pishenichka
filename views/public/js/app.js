@@ -6,10 +6,10 @@ const app = new Vue({
         regionsTabs: {},
         additional_tab: 'regions',
         additional_shop_tab: 'fields',
-        additional_regions_tab: 'regions',
+        additional_regions_tab: 'sectors',
         additional_warehouse_tab: 'harvest',
         sell_harvest_quantity: [],
-        seeds_shop: {},
+        product_amounts: {},
         errorTitle: 'ОШИБКА',
         errorText: null,
         infoModalText: null,
@@ -19,12 +19,15 @@ const app = new Vue({
         priceFactor: 0,
         fieldsBuildingFactor: 0,
         entities: {},
-        user: { warehouse: { seeds: {}, harvest: {}} },
+        user: { warehouse: { } },
         sectorFactors: {},
         actualPrices: {},
         plant: {},
+        editProductions: { show: false, sectorId: null, production: null },
+        buildOnSectors: { show: false, sectorId: null },
         createSectors: { show: false, regionId: null, availableSpace: 0 },
         researchRegion: { show: false, regionId: null},
+        lang: {}
     },
     async beforeMount(){
         this.sectorFactors = (await postData('/get_field_factors')).data;
@@ -32,31 +35,19 @@ const app = new Vue({
         await this.getRegions();
         this.update_regions_values();
         this.update_warehouse_values();
+        this.getLang();
 
         setInterval(async () => {
             await this.update();
         }, 1000);
     },
     methods: {
-        _: function(text) {
-            const lang = {
-                FIELD: 'поле',
-                VINEYARD: 'виноградник',
-                GARDEN: 'сад',
-                WAREHOUSE: 'склад',
-                ELEVATOR: 'эдеватор',
-                GARAGE: 'гараж',
-                WINERY: 'винный завод',
-                BREWERY: 'пивоварня',
-                DISTILLERY: 'вискикурня',
-                BAKERY: 'хлебзавод',
-                WHEAT: 'пишеничка',
-                BARLEY: 'ячмень',
-                CORN: 'кукуруза'
-            };
-            return lang[text.toUpperCase()];
+        _: function(key) {
+            return this.lang[key.toUpperCase()] ? this.lang[key.toUpperCase()] : key.toUpperCase();
         },
         $: function(price) {
+            if (!price)
+                return 0;
             return (price * this.priceFactor).toFixed(0);
         },
         deleteSector: async function(id) {
@@ -66,6 +57,17 @@ const app = new Vue({
                 await this.getRegions();
         },
 
+        editProduction: async function (id, production) {
+            this.editProductions.sectorId = id;
+            this.editProductions.production = production;
+            this.editProductions.show = true;
+        },
+
+        buildOnSector: async function (id) {
+            this.buildOnSectors.sectorId = id;
+            this.buildOnSectors.show = true;
+        },
+
         createSector(id, availableSpace) {
             this.createSectors.regionId = id;
             this.createSectors.availableSpace = availableSpace;
@@ -73,7 +75,6 @@ const app = new Vue({
         },
         update: async function () {
             const data = await postData('/get_update');
-            console.log('data', data);
             if (data.error) this.startErrorModal(data.error);
             this.timeString = data.isoString;
             this.temp = data.temp;
@@ -114,6 +115,9 @@ const app = new Vue({
             this.regions.forEach((region) => {
                 region.openTab = this.regionsTabs[region._id];
             });
+        },
+        getLang: async function () {
+            this.lang = (await postData('/get_lang', { lang: 'ru' })).data;
         },
         update_warehouse_values: function () {
 
@@ -166,17 +170,20 @@ const app = new Vue({
             if (data.error) this.startErrorModal(data.error);
         },
 
-        sell_harvest: async function (harvestType, quantity) {
-            const data = await postData('/harvest/sell', { harvestType, quantity });
+        sell_harvest: async function (productName, quantity) {
+            const data = await postData('/product/sell', { productName, quantity });
             console.log('data', data);
             if (data.error) this.startErrorModal(data.error);
         },
 
-        buy_seeds: async function (seedType, quantity) {
+        buy_product: async function (productName, quantity) {
 
             if (!quantity) return;
-            const data = await postData('/seeds/buy', { seedType, quantity });
+
+            const data = await postData('/product/buy', { productName, quantity });
+
             console.log('data', data);
+
             if (data.error) this.startErrorModal(data.error);
         }
     }

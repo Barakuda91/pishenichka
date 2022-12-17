@@ -1,5 +1,5 @@
-const DB = require('./lib/DB');
-const {randomIntFromInterval} = require('./lib/tools');
+const DB = require('../lib/DB');
+const { randomIntFromInterval } = require('../lib/tools');
 
 const perlin = require('perlin-noise');
 

@@ -2,7 +2,21 @@ const express = require('express');
 const router = express.Router();
 const { messages } = require('../lib/tools');
 
-module.exports = ({ regionsService, sectorsService, localisation, config }) => {
+module.exports = ({ regionsService, sectorsService, productionListService, localisation, config }) => {
+
+    router.post('/get_production_list', async (req, res) => {
+        const productionList = await productionListService.findProductionList();
+
+        res.json({ code: 200, data: productionList });
+    });
+    router.post('/get_sector', async (req, res) => {
+        const sector = await sectorsService.getSector(req.body.id);
+
+        if (!sector)
+            return res.json({ code: 403, text: 'Сектор не найден' });
+
+        res.json({ code: 200, data: sector });
+    });
 
     router.post('/delete', async (req, res) => {
         const sector = await sectorsService.getSector(req.body.id);
