@@ -21,18 +21,18 @@
                                     <div class="col-sm-3 text-small"></div>
                                 </div>
                                 <div class="row" v-for="(el, i) in productionList" v-if="el.stage > 1">
-                                    <div class="col-5" v-bind:class="{ 'text-danger': balance < el.basePrice }">{{ _(el.title) }}</div>
+                                    <div class="col-5" v-bind:class="{ 'text-danger': user.balance < el.basePrice }">{{ _(el.title) }}</div>
                                     <div class="col-2">{{ el.placeSize }}</div>
-                                    <div class="col-2" v-bind:class="{ 'text-danger': balance < el.basePrice }">{{ el.basePrice }}</div>
+                                    <div class="col-2" v-bind:class="{ 'text-danger': user.balance < el.basePrice }">{{ el.basePrice }}</div>
                                     <div class="col-3">
                                         <button
-                                                v-if="balance >= el.basePrice"
+                                                v-if="user.balance >= el.basePrice"
                                                 class="btn btn-outline-primary btn-sm"
                                             @click="build(el.name)"
                                         >
                                             {{ _('BUILD') }}
                                         </button>
-                                        <button disabled v-if="balance < el.basePrice" class="btn btn-primary btn-sm" >{{ _('BUILD') }}</button>
+                                        <button disabled v-if="user.balance < el.basePrice" class="btn btn-primary btn-sm" >{{ _('BUILD') }}</button>
                                     </div>
                                 </div>
                             </div>

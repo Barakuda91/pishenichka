@@ -5,7 +5,7 @@ const Plant = require('../lib/entities/Plant');
 
 const { messages } = require('../lib/tools');
 
-module.exports = ({ sectorsService, userService, seedsService, plantService, economy, localisation, config }) => {
+module.exports = ({ sectorsService, userService, seedsService, plantService, localisation, config }) => {
 
     router.post('/sow', async (req, res, next) => {
 
@@ -127,7 +127,7 @@ module.exports = ({ sectorsService, userService, seedsService, plantService, eco
     router.post('/buy', async (req, res) => {
         const field = await sectorsService.getSector(req.body.id);
         const user = await userService.getUser(req.user._id);
-        const price = economy.getActualPrice(field.salePrice);
+        const price = world.economy.getActualPrice(field.salePrice);
 
         if (field.ownerId)
             return res.json({ error: 'Это поле занято' });

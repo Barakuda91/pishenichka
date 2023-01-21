@@ -8,11 +8,25 @@
             >{{ _('REGISTRY') }}</button>
         </li>
         <li>
-        <button
-                @click="additional_tab = additional_tab === 'production' ? null : 'production'"
-                v-bind:class="additional_tab === 'production' ? 'btn-primary' : 'btn-outline-primary'"
-                class="btn btn-sm w-100 mb-1"
-        >{{ _('PRODUCTION') }}</button>
+            <button
+                    @click="additional_tab = additional_tab === 'exchange' ? null : 'exchange'; getExchange();"
+                    v-bind:class="additional_tab === 'exchange' ? 'btn-primary' : 'btn-outline-primary'"
+                    class="btn btn-sm w-100 mb-1"
+            >{{ _('EXCHANGE') }}</button>
+        </li>
+        <li>
+            <button
+                    @click="additional_tab = additional_tab === 'fields' ? null : 'fields'"
+                    v-bind:class="additional_tab === 'fields' ? 'btn-primary' : 'btn-outline-primary'"
+                    class="btn btn-sm w-100 mb-1"
+            >{{ _('FIELDS') }}</button>
+        </li>
+        <li>
+            <button
+                    @click="additional_tab = additional_tab === 'production' ? null : 'production'"
+                    v-bind:class="additional_tab === 'production' ? 'btn-primary' : 'btn-outline-primary'"
+                    class="btn btn-sm w-100 mb-1"
+            >{{ _('PRODUCTION') }}</button>
         </li>
         <li>
             <button

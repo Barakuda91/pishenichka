@@ -7,6 +7,8 @@ const { randomIntFromInterval } = require('../lib/tools');
 
 module.exports = ({ userService, localisation, config }) => {
 
+    const _ = localisation(config.defaultLang);
+
     // TODO client
     router.get('/', (req, res) => {
         res.sendFile('views/auth.html', { root: '/var/www/pishenichka/' });
@@ -14,7 +16,6 @@ module.exports = ({ userService, localisation, config }) => {
 
     router.post('/registration', async (req, res) => {
         const { login, password1, password2 } = req.body;
-        const _ = localisation(config.defaultLang);
 
         const user = await userService.findUserByLogin(login);
 
@@ -37,7 +38,6 @@ module.exports = ({ userService, localisation, config }) => {
 
     router.post('/login', async (req, res) => {
         const { login, password } = req.body;
-        const _ = localisation(config.defaultLang);
 
         const user = await userService.findUserByLogin(login);
 

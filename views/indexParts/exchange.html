@@ -1,0 +1,111 @@
+<div v-show="additional_tab === 'exchange'">
+    <div class="card text-center">
+        <div class="card-header">
+            ПЕРВАЯ ГОСУДАРСТВЕННАЯ БИРЖА ТОВАРОВ
+        </div>
+
+        <div class="row text-small">
+            <div class="col-3 text-left">
+                рынок: <span class="fw-bold">{{ _(exchange.currentMarket) }}</span>
+            </div>
+            <div class="col-5">
+                суточный объем: <span class="fw-bold">159925</span>
+            </div>
+            <div class="col-4">
+                на вашем складе <span class="fw-bold">биржи: 0</span>
+            </div>
+        </div>
+
+        <div class="row card-body">
+
+            <div class="col-3">
+
+                <div class="row">
+                    <div class="input-group input-group-sm mb-3 col-12">
+                        <span class="input-group-text" id="basic-addon1" style="padding-top: 0; padding-bottom: 0;">Рынок:</span>
+                        <div style="padding-top: 0; padding-bottom: 0; box-shadow: none" type="button" class="btn btn-sm btn-outline-secondary" id="button-addon1" @click="exchange.marketAll = !exchange.marketAll">{{ exchange.marketAll ? "всё" : "избранное" }}</div>
+                    </div>
+                </div>
+                <div class="list-group element-978y98hjkjh">
+
+                    <button
+                            class="list-group-item list-group-item-action text-small" style="cursor: pointer" v-for="market in exchange.markets"
+                            @click="exchange.currentMarket = market"
+                            v-bind:class="{active: exchange.currentMarket === market}"
+                    >
+                        {{ _(market) }}
+                    </button>
+
+                </div>
+            </div>
+
+            <div class="col-5">
+                <div class="row text-smaller alert-dark">
+                    <div class="col-4">цена</div>
+                    <div class="col-4">количество</div>
+                    <div class="col-4">всего</div>
+                </div>
+                <div class="row text-small alert-danger" v-for="sell in exchange.orderBook.sell">
+                    <div class="col-4">{{ sell.price }}</div>
+                    <div class="col-4">{{ sell.amount }}</div>
+                    <div class="col-4">{{ sell.price * sell.amount }}</div>
+                </div>
+                <div class="row text-smaller alert-warning">
+                    <div class="col-4" v-if="exchange.orderSide === 'SELL' && exchange.orderBook.sell">{{ exchange.orderBook.sell[exchange.orderBook.sell.length - 1].price }}</div>
+                    <div class="col-4" v-if="exchange.orderSide === 'BUY' && exchange.orderBook.buy">{{ exchange.orderBook.buy[0].price }}</div>
+                </div>
+                <div class="row text-small alert-success" v-for="buy in exchange.orderBook.buy">
+                    <div class="col-4">{{ buy.price }}</div>
+                    <div class="col-4">{{ buy.amount }}</div>
+                    <div class="col-4">{{ buy.price * buy.amount }}</div>
+                </div>
+            </div>
+
+
+            <div class="col-4">
+                <div class="row">
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Basic mixed styles example">
+                        <button type="button" class="btn" v-bind:class="{ 'btn-success': exchange.orderSide === 'BUY', 'btn-outline-success': exchange.orderSide === 'SELL' }" @click="exchange.orderSide = 'BUY'">КУПИТЬ</button>
+                        <button type="button" class="btn" v-bind:class="{ 'btn-danger': exchange.orderSide === 'SELL', 'btn-outline-danger': exchange.orderSide === 'BUY' }" @click="exchange.orderSide = 'SELL'">ПРОДАТЬ</button>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Basic mixed styles example">
+                        <a type="button" class="btn btn-light btn-sm" v-bind:class="{ 'fw-bold': exchange.orderType === 'LIMIT' }" @click="exchange.orderType = 'LIMIT'">Limit</a>
+                        <a type="button" class="btn btn-light btn-sm" v-bind:class="{ 'fw-bold': exchange.orderType === 'MARKET' }" @click="exchange.orderType = 'MARKET'">Market</a>
+                    </div>
+                </div>
+
+                <div class="row" v-if="exchange.orderType === 'LIMIT'">
+                    <div class="col-8 input-group input-group-sm mb-3">
+                        <input type="number" class="form-control" placeholder="цена" v-model="exchange.price" aria-describedby="basic-addon2">
+                        <span class="input-group-text" id="basic-addon2">3423</span>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-8 input-group input-group-sm mb-3">
+                        <input type="number" class="form-control" placeholder="количество" v-model="exchange.amount" aria-describedby="basic-addon3">
+                        <span v-if="exchange.orderSide === 'SELL'" class="input-group-text" id="basic-addon3">{{ user.warehouse[exchange.currentMarket.toLowerCase()] }}</span>
+                        <span v-if="exchange.orderSide === 'BUY'" class="input-group-text" id="basic-addon3">{{ Math.floor(balance / exchange.price) }}</span>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12 btn-group btn-group-sm">
+                        <button type="button"
+                                class="btn"
+                                v-bind:class="{ 'btn-success': exchange.orderSide === 'BUY', 'btn-danger': exchange.orderSide === 'SELL' }"
+                                @click="newOrder()"
+                        >
+                            {{ exchange.orderSide === 'BUY' ? "КУПИТЬ" : "ПРОДАТЬ" }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+

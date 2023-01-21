@@ -1,3 +1,104 @@
 <div v-show="additional_tab === 'fields'">
+    <div class="card text-center">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs">
+                <li class="nav-item">
+                    <button class="nav-link" aria-current="true" href="#"
+                            v-bind:class="additional_regions_tab === 'fields' ? 'active' : ''"
+                            @click="additional_regions_tab = additional_regions_tab === 'fields' ? null : 'fields'"
+                    >поля</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" aria-current="true" href="#"
+                            v-bind:class="additional_regions_tab === 'vineyard' ? 'active' : ''"
+                            @click="additional_regions_tab = additional_regions_tab === 'vineyard' ? null : 'vineyard'"
+                    >виноградники</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" aria-current="true" href="#"
+                            v-bind:class="additional_regions_tab === 'garden' ? 'active' : ''"
+                            @click="additional_regions_tab = additional_regions_tab === 'garden' ? null : 'garden'"
+                    >огороды</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" aria-current="true" href="#"
+                            v-bind:class="additional_regions_tab === 'orchard' ? 'active' : ''"
+                            @click="additional_regions_tab = additional_regions_tab === 'orchard' ? null : 'orchard'"
+                    >сады</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" aria-current="true" href="#"
+                            v-bind:class="additional_regions_tab === 'corral' ? 'active' : ''"
+                            @click="additional_regions_tab = additional_regions_tab === 'corral' ? null : 'corral'"
+                    >загоны</button>
+                </li>
+            </ul>
+        </div>
 
+        <div class="row" v-show="additional_regions_tab === 'fields'">
+            <div class="modal-body" style="overflow-y: scroll; max-height: 50vh">
+<!--                <slot name="body">-->
+<!--                    <p>{{ _('PRODUCTION_EDIT_TEXT_1') }}</p>-->
+<!--                    <p>Рецепты</p>-->
+<!--                    <div class="row">-->
+<!--                        <div class="col-sm-1 text-small">склад</div>-->
+<!--                        <div class="col-sm-3 text-small">сырье</div>-->
+<!--                        <div class="col-sm-1 text-small">склад</div>-->
+<!--                        <div class="col-sm-3 text-small">продукция</div>-->
+<!--                        <div class="col-sm-1 text-small">дни</div>-->
+<!--                        <div class="col-sm-1 text-small">стоимость</div>-->
+<!--                        <div class="col-sm-2 text-small"></div>-->
+<!--                    </div>-->
+<!--                    <div class="row" style="border-bottom: 1px solid silver"-->
+<!--                         v-for="(recipe, i) of production.entity.recipes"-->
+<!--                         v-bind:class="{-->
+<!--                                        'text-success': production.cycles && production.cycles[recipe.name],-->
+<!--                                        'text-danger': enoughRawMaterials[recipe.name]-->
+<!--                                    }"-->
+<!--                    >-->
+<!--                        <div class="col-sm-1">-->
+<!--                                        <span v-for="(amount, product) of recipe.inputProducts">-->
+<!--                                            {{ user.warehouse[product] || 0}}-->
+<!--                                        </span>-->
+<!--                        </div>-->
+<!--                        <div class="col-sm-3">-->
+<!--                                        <span v-for="(amount, product) of recipe.inputProducts">-->
+<!--                                            {{ _(product) }}[{{ amount}}]-->
+<!--                                        </span>-->
+<!--                        </div>-->
+
+<!--                        <div class="col-sm-1">-->
+<!--                                        <span v-for="(amount, product) of recipe.outputProducts">-->
+<!--                                            {{ user.warehouse[product] || 0}}-->
+<!--                                        </span>-->
+<!--                        </div>-->
+<!--                        <div class="col-sm-3">-->
+<!--                                        <span v-for="(amount, product) of recipe.outputProducts">-->
+<!--                                            {{ _(product) }}[{{ amount}}]-->
+<!--                                        </span>-->
+<!--                        </div>-->
+
+<!--                        <div class="col-sm-1">{{ recipe.cycleDuration }}</div>-->
+<!--                        <div class="col-sm-1">{{ recipe.cost }}</div>-->
+<!--                        <div class="col-sm-2">-->
+<!--                            <button v-if="!production.cycles || !production.cycles[recipe.name]" @click="startCycle(i, production._id)" class="btn btn-sm btn-outline-success">запустить</button>-->
+<!--                            <button v-if="production.cycles && production.cycles[recipe.name]" @click="stopCycle(i, production._id)" class="btn btn-sm btn-outline-success">остановить</button>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </slot>-->
+            </div>
+        </div>
+
+        <div class="row" v-show="additional_regions_tab === 'builds'">
+            <div v-for="(sector, id) in user.sectors" class="col-sm-12">
+                <field v-if="sector.type === 'BUILD'"
+                       v-bind:sector="sector"
+                       v-bind:id="id"
+                       v-bind:user="user"
+                       v-bind:_="_"
+                ></field>
+            </div>
+        </div>
+    </div>
 </div>
+

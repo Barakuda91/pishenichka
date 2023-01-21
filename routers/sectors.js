@@ -2,13 +2,14 @@ const express = require('express');
 const router = express.Router();
 const { messages } = require('../lib/tools');
 
-module.exports = ({ regionsService, sectorsService, productionListService, localisation, config }) => {
+module.exports = ({ regionsService, sectorsService, productionListService, productionService, localisation, config }) => {
 
     router.post('/get_production_list', async (req, res) => {
         const productionList = await productionListService.findProductionList();
 
         res.json({ code: 200, data: productionList });
     });
+
     router.post('/get_sector', async (req, res) => {
         const sector = await sectorsService.getSector(req.body.id);
 
@@ -67,16 +68,33 @@ module.exports = ({ regionsService, sectorsService, productionListService, local
                 salePrice: 10500 * sector.size,
                 parentRegion: region._id,
                 status: 'PRIVATE',
-                ownerId: req.user._id
+                ownerId: req.user._id,
+                isFree: false
             };
 
             region.availableSpace -= sector.size;
+
             if (sector.separate) {
                 region.totalSpace -= sector.size;
                 createObj.parentRegion = null;
             }
 
-            await sectorsService.createSector(createObj);
+            const newSector = await sectorsService.createSector(createObj);
+
+            // если это поле - то сразу ставим производство, по сути - поле это производство изначально
+            if (['VINEYARD','FIELD','GARDEN','ORCHARD','CORRAL'].includes(sector.type)) {
+                const productionType = await productionListService.findProductionByName(sector.type.toLowerCase());
+
+                const prObject = {
+                    sectorId: newSector._id,
+                    productionName: productionType.name,
+                    ownerId: req.user._id,
+                    userId: req.user._id,
+                    cycles: {}
+                };
+
+                const newProduction = await productionService.createProduction(prObject);
+            }
         }
 
         await region.save();

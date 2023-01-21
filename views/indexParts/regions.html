@@ -89,25 +89,35 @@
             <div v-for="(sector, id) in user.sectors" class="col-sm-12">
                 <div class="row" style="border-top: 1px solid #b3b3b3;">
                     <div class="col-sm-1 text-smaller">{{ sector.position[0] }}-{{ sector.position[1] }}</div>
-                    <div class="col-sm-1 text-smaller">{{ sector.crop ? sector.filed : 0}}/{{ sector.size }} </div>
+                    <div class="col-sm-1 text-smaller">{{ sector.size }} </div>
                     <div class="col-sm-1"><span class="fw-bold tex">{{ sector.crop ? sector.crop.currentState.toFixed(0) : 0 }}%</span></div>
                     <div class="col-sm-2 text-smaller">
-                        <span v-if="sector.type !== 'BUILD'">{{ _(sector.type) }}</span>
+                        <span v-if="['VINEYARD','FIELD','GARDEN','ORCHARD','CORRAL'].includes(sector.type)">
+                            <a
+                                    href="#"
+                                    class="btn btn-primary btn-sm"
+                                    v-on:click="editCultivation(sector, sector.production)"
+                            >
+                            {{ _(sector.production.entity.title) }}
+                            </a>
+                        </span>
                         <a
                                 href="#"
                                 v-else-if="sector.type === 'BUILD' && sector.production"
                                 class="btn btn-primary btn-sm"
-                                v-on:click="editProduction(sector._id, sector.production)">
+                                v-on:click="editProduction(sector, sector.production)">
                             {{ _(sector.production.entity.title) }}
                         </a>
                         <a
                                 href="#"
                                 v-else-if="sector.type === 'BUILD' && !sector.production"
                                 class="btn btn-primary btn-sm"
-                                v-on:click="buildOnSector(sector._id)">
+                                v-on:click="buildOnSector(sector)">
                             {{ _('BUILD') }}
                         </a>
-                        <span v-else>{{ sector.type }}</span>
+                        <span v-else>
+                            {{ sector.type }}
+                        </span>
                     </div>
                     <div class="col-sm-2 text-smaller"><span class="fw-bold">{{ Math.round(Math.random() * 10000) }}</span></div>
                     <div class="col-sm-5 text-smaller">

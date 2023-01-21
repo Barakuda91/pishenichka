@@ -3,7 +3,7 @@ const router = express.Router();
 
 const { messages } = require('../lib/tools');
 
-module.exports = ({ userService, productService, economy, localisation, config }) => {
+module.exports = ({ userService, productService, localisation, config }) => {
     router.post('/buy', async (req, res) => {
         const product = await productService.findProductByName(req.body.productName);
 
@@ -11,7 +11,7 @@ module.exports = ({ userService, productService, economy, localisation, config }
             return res.json({ error: 'Не правильно указан тип продукта' });
 
         req.body.quantity = Number(req.body.quantity);
-        const price = economy.getActualPrice(product.baseBuyPrice * req.body.quantity);
+        const price = req.world.economy.getActualPrice(product.baseBuyPrice * req.body.quantity);
 
         if (price > req.user.balance)
             return res.json({ error: 'У вас не достаточно денег' });

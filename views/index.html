@@ -2,10 +2,11 @@
 <html>
 <head>
     <title>Pishenichka Project</title>
-    <script src="/js/bootstrap.js"></script>
+    <script src="/js/bootstrap.bundle.min.js"></script>
     <script src="/vue.js"></script>
     <script src="/vue-select.js"></script>
     <script src="/js/functions.js"></script>
+    <script src="/socket.io.js"></script>
     <templates_js_components />
     <link href="/css/bootstrap.css" rel="stylesheet">
     <link href="/vue-select.css" rel="stylesheet">
@@ -20,6 +21,7 @@
                 <templates_left_menu />
                 <div class="col-sm-7">
                     <templates_regions />
+                    <templates_exchange />
                     <templates_fields />
                     <templates_transport />
                     <templates_warehouse />
@@ -45,8 +47,18 @@
                     @get_regions="getRegions()"
             ></create_sectors>
 
+            <edit_cultivations
+                    v-bind:sector="editCultivations.sector"
+                    v-bind:production="editCultivations.production"
+                    v-bind:user="user"
+                    v-bind:_="_"
+                    v-if="editCultivations.show"
+                    @close="editCultivations.show = false"
+                    @get_regions="getRegions()"
+            ></edit_cultivations>
+
             <edit_productions
-                    v-bind:sector_id="editProductions.sectorId"
+                    v-bind:sector="editProductions.sector"
                     v-bind:production="editProductions.production"
                     v-bind:user="user"
                     v-bind:_="_"
@@ -56,8 +68,8 @@
             ></edit_productions>
 
             <build_on_sectors
-                    v-bind:sector_id="buildOnSectors.sectorId"
-                    v-bind:balance="balance"
+                    v-bind:sector="buildOnSectors.sector"
+                    v-bind:user="user"
                     v-bind:_="_"
                     v-if="buildOnSectors.show"
                     @close="buildOnSectors.show = false"

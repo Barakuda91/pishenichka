@@ -12,9 +12,10 @@ async function configureContainer () {
         config: asValue(require('../config')),
 
         localisation: asFunction(require('./localisation')),
-
+        middlewares: asFunction(require('./middlewares')),
         express: asFunction(require('./express')).singleton(),
         server: asFunction(require('./server')).singleton(),
+        io: asFunction(require('./io')).singleton(),
 
         // DB models
         users: asValue(db.users),
@@ -23,8 +24,9 @@ async function configureContainer () {
         researches: asValue(db.researches),
         sectors: asValue(db.sectors),
         seeds: asValue(db.seeds),
-        world: asValue(db.world),
+        //  world: asValue(db.world),
         products: asValue(db.products),
+        orders: asValue(db.orders),
         productions: asValue(db.productions),
         productions_list: asValue(db.productions_list),
 
@@ -35,6 +37,7 @@ async function configureContainer () {
         sectorsRouter: asFunction(require('../routers/sectors')),
         productionRouter: asFunction(require('../routers/production')),
         productRouter: asFunction(require('../routers/product')),
+        orderRouter: asFunction(require('../routers/order')),
 
         // services
         userService: asFunction(require('../services/userService')),
@@ -46,8 +49,9 @@ async function configureContainer () {
         productService: asFunction(require('../services/productService')),
         productionService: asFunction(require('../services/productionService')),
         productionListService: asFunction(require('../services/productionListService')),
+        orderService: asFunction(require('../services/orderService')),
 
-        tickUpdate: asFunction(require('../lib/tickUpdate')),
+        world: asFunction(require('../lib/world')),
 
         economy: asClass(require('../lib/entities/world/Economy')),
         weather: asClass(require('../lib/entities/world/Weather')),

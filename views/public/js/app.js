@@ -1,10 +1,18 @@
 Vue.component("v-select", VueSelect.VueSelect);
+
+const socket = io({
+    auth: {
+        token: getCookie('auth')
+    },
+    reconnectionDelayMax: 10000,
+});
+
 const app = new Vue({
     el: '#app',
     data: {
         regions: {},
         regionsTabs: {},
-        additional_tab: 'regions',
+        additional_tab: 'exchange',
         additional_shop_tab: 'fields',
         additional_regions_tab: 'sectors',
         additional_warehouse_tab: 'harvest',
@@ -19,27 +27,52 @@ const app = new Vue({
         priceFactor: 0,
         fieldsBuildingFactor: 0,
         entities: {},
-        user: { warehouse: { } },
+        user: { warehouse: { }, exchange: { wheat: 1599 } },
         sectorFactors: {},
         actualPrices: {},
         plant: {},
         editProductions: { show: false, sectorId: null, production: null },
+        editCultivations: { show: false, sector: null, production: null },
         buildOnSectors: { show: false, sectorId: null },
         createSectors: { show: false, regionId: null, availableSpace: 0 },
         researchRegion: { show: false, regionId: null},
-        lang: {}
+        lang: {},
+
+
+        exchange: {
+            orderBook: {},
+            price: 28,
+            orderType: 'LIMIT',
+            orderSide: 'BUY',
+            marketAll: true,
+            currentMarket: 'GRAPE_ISABELLA',
+            markets: [
+                'GRAPE_ISABELLA',
+                'WHEAT',
+                'BARLEY',
+                'OIL',
+                'CORN',
+                'FLOUR',
+                'GRAPE_ISABELLA',
+                'WHEAT',
+                'BARLEY',
+                'OIL',
+                'CORN',
+                'FLOUR'
+            ]
+        }
     },
-    async beforeMount(){
+    async beforeMount() {
+
+        socket.on('update', async (data) => {
+            // console.log('update.data', data);
+            await this.update(data);
+        });
         this.sectorFactors = (await postData('/get_field_factors')).data;
-        await this.update();
         await this.getRegions();
         this.update_regions_values();
         this.update_warehouse_values();
         this.getLang();
-
-        setInterval(async () => {
-            await this.update();
-        }, 1000);
     },
     methods: {
         _: function(key) {
@@ -57,14 +90,20 @@ const app = new Vue({
                 await this.getRegions();
         },
 
-        editProduction: async function (id, production) {
-            this.editProductions.sectorId = id;
+        editCultivation: async function (sector, production) {
+            this.editCultivations.sector = sector;
+            this.editCultivations.production = production;
+            this.editCultivations.show = true;
+        },
+
+        editProduction: async function (sector, production) {
+            this.editProductions.sector = sector;
             this.editProductions.production = production;
             this.editProductions.show = true;
         },
 
-        buildOnSector: async function (id) {
-            this.buildOnSectors.sectorId = id;
+        buildOnSector: async function (sector) {
+            this.buildOnSectors.sector = sector;
             this.buildOnSectors.show = true;
         },
 
@@ -73,33 +112,36 @@ const app = new Vue({
             this.createSectors.availableSpace = availableSpace;
             this.createSectors.show = true;
         },
-        update: async function () {
-            const data = await postData('/get_update');
-            if (data.error) this.startErrorModal(data.error);
-            this.timeString = data.isoString;
-            this.temp = data.temp;
-            this.balance = data.user.balance;
-            this.entities = data.entities;
-            this.user = data.user;
-            this.priceFactor = data.priceFactor;
-            this.actualPrices = data.actualPrices;
+        update: async function ({ action, data }) {
+            switch (action) {
+                case 'user':
+                    this.user = data.user;
+                    this.balance = data.user.balance;
+                    this.user.agronomists = [
+                        {
+                            name: 'Gustaf',
+                            surname: 'Malkov',
+                            lvl: 13,
+                            exp: 3267
+                        },
+                        {
+                            name: 'Ernest',
+                            surname: 'Abramov',
+                            lvl: 3,
+                            exp: 559
+                        },
+                    ];
 
-            this.user.agronomists = [
-                {
-                    name: 'Gustaf',
-                    surname: 'Malkov',
-                    lvl: 13,
-                    exp: 3267
-                },
-                {
-                    name: 'Ernest',
-                    surname: 'Abramov',
-                    lvl: 3,
-                    exp: 559
-                },
-            ];
-
-            this.user.agronomists.forEach((agr) => {agr.fullName = `${agr.name} ${agr.surname}`;})
+                    this.user.agronomists.forEach((agr) => {agr.fullName = `${agr.name} ${agr.surname}`;})
+                    break;
+                case 'world':
+                    this.timeString = data.isoString;
+                    this.temp = data.temp;
+                    this.entities = data.entities;
+                    this.priceFactor = data.priceFactor;
+                    this.actualPrices = data.actualPrices;
+                    break;
+            }
         },
         toggleSectorsInRegion: async function(id) {
             this.regions.forEach((region, i) => {
@@ -109,6 +151,27 @@ const app = new Vue({
                     app.$forceUpdate();
                 }
             });
+        },
+
+        newOrder: async function() {
+            const res = await postData('/order/new', {
+                side: this.exchange.orderSide,
+                type: this.exchange.orderType,
+                amount: this.exchange.amount,
+                price: this.exchange.price,
+                product: this.exchange.currentMarket.toLowerCase()
+            });
+            console.log('res', res);
+        },
+        getExchange: async function() {
+
+            const orderBookResult = await postData('/order/get_orderbook', {product: this.exchange.currentMarket.toLowerCase()});
+
+            if (!orderBookResult.data)
+                return alert('Проблема с получением ордербука')
+
+            this.exchange.orderBook = orderBookResult.data;
+
         },
         getRegions: async function() {
             this.regions = (await postData('/regions/get_my')).data;

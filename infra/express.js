@@ -2,12 +2,12 @@ const path = require('path')
 const express = require('express')
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
-const jwt = require("jsonwebtoken");
 const fs = require("fs-extra");
 const translator = {
     ru: require('../lang/ru.json'),
     en: require('../lang/en.json')
 };
+
 module.exports = ({
                       authRouter,
                       fieldRouter,
@@ -15,24 +15,20 @@ module.exports = ({
                       sectorsRouter,
                       productRouter,
                       productionRouter,
+                      orderRouter,
 
-                      userService,
+                      middlewares,
+
                       sectorsService,
-                      seedsService,
                       productService,
-                      productionService,
-                      productionListService,
 
-                      localisation,
-                      economy,
-                      weather,
+                      world,
                       config,
-                      tickUpdate
                   }) => {
 
-    setInterval(tickUpdate.tick, tickUpdate.getTickDuration())
 
     const app = express();
+    const { auth, user } = middlewares;
 
     app.use(bodyParser.urlencoded({ extended: false }));
     app.use(bodyParser.json());
@@ -41,58 +37,19 @@ module.exports = ({
     app.use(express.static('node_modules/bootstrap-vue/dist'));
     app.use(express.static('node_modules/vue-select/dist'));
     app.use(express.static('node_modules/vue/dist'));
+    app.use(express.static('node_modules/socket.io/client-dist'));
     app.use(express.static('views/public'));
 
-    app.use(async (req, res, next) => {
-        let _ = localisation(config.defaultLang);
-        if (req.cookies.auth) {
-            const decodedToken =  jwt.decode(req.cookies.auth);
-
-            if (!decodedToken.login)
-                return res.json({ code: 400, message: _('WRONG_AUTH_TOKEN') });
-
-            const user = await userService.findUserByLogin(decodedToken.login)
-
-            try {
-                jwt.verify(req.cookies.auth, user.pass);
-            } catch (e) {
-                return res.json({ code: 401, message: _('WRONG_AUTH_TOKEN') });
-            }
-
-            req.user = user;
-            req.user.sectors = await sectorsService.getUserSectors(user._id);
-
-            // заполняем список производств
-            for (const sector of req.user.sectors) {
-                if (sector.type === 'BUILD' && !sector.isFree) {
-                    sector.production = await productionService.findProductionBySector(sector._id);
-                    if (sector.production)
-                        sector.production.entity = await productionListService.findProductionByName(sector.production.productionName);
-                }
-            }
-        }
-
-        // req.economy = economy;
-
-        // TODO вынести актуальные цены в отдельную коллекцию, и пересчитывать при обновлении экономики
-        req.actualPrices = {};
-
-        (await productService.findProducts()).forEach((product) => {
-            req.actualPrices[product.name] = economy.getActualPrice( product.baseSellPrice );
-        });
-
-        next();
-    });
-
     app.use('/auth', authRouter);
-    app.use('/field', fieldRouter);
-    //app.use('/harvest', harvestRouter);
-    //app.use('/seeds', seedsRouter);
-    app.use('/regions', regionsRouter);
-    app.use('/sectors', sectorsRouter);
-    app.use('/product', productRouter);
-    app.use('/production', productionRouter);
 
+    app.use('/field', auth, user, fieldRouter);
+    app.use('/regions', auth, user, regionsRouter);
+    app.use('/sectors', auth, user, sectorsRouter);
+    app.use('/product', auth, user, productRouter);
+    app.use('/production', auth, user, productionRouter);
+    app.use('/order', auth, user, orderRouter);
+
+    // Всё что ниже должно уехать на фронт
     app.get('*', async (req, res, next) => {
         res.sendFile = async (filePath, ops) => {
 
@@ -120,12 +77,14 @@ module.exports = ({
             const production = (await fs.readFile(`${ops.root}/views/indexParts/production.html`)).toString();
             const shop = (await fs.readFile(`${ops.root}/views/indexParts/shop.html`)).toString();
             const regions = (await fs.readFile(`${ops.root}/views/indexParts/regions.html`)).toString();
+            const exchange = (await fs.readFile(`${ops.root}/views/indexParts/exchange.html`)).toString();
 
             // если это станет узким местом - можно внедрить генератор переменной и перегенеривать её с каким то промежутком
             res.send(file
                 .replace('<templates_top_line />', topLine)
                 .replace('<templates_warehouse />', warehouse)
                 .replace('<templates_fields />', fields)
+                .replace('<templates_exchange />', exchange)
                 .replace('<templates_transport />', transport)
                 .replace('<templates_production />', production)
                 .replace('<templates_shop />', shop)
@@ -159,27 +118,27 @@ module.exports = ({
         res.json({ code: 200, data: translator[req.body.lang || 'ru'] });
     });
 
-    app.post('/get_update', async (req, res) => {
-
-        const times = tickUpdate.getInfo();
-        const sectors = await sectorsService.getUserSectors(req.user._id);
-        const products = await productService.findProducts();
-
-        const resObject = {
-            actualPrices: req.actualPrices,
-            priceFactor: economy.getPriceFactor(),
-            ...times,
-            temp: weather.getDayTemp(times.currentDay),
-            entities: { sectors, products }
-        };
-
-        if (req.user) {
-            resObject.user = req.user;
-            delete resObject.user.pass;
-        }
-
-        res.json(resObject);
-    });
+    // app.post('/get_update', auth, user, async (req, res) => {
+    //
+    //     const times = world.getInfo();
+    //     const sectors = await sectorsService.getUserSectors(req.user._id);
+    //     const products = await productService.findProducts();
+    //
+    //     const resObject = {
+    //         actualPrices: req.actualPrices,
+    //         priceFactor: world.economy.getPriceFactor(),
+    //         ...times,
+    //         temp: world.weather.getDayTemp(times.dayOfYear),
+    //         entities: { sectors, products }
+    //     };
+    //
+    //     if (req.user) {
+    //         resObject.user = req.user;
+    //         delete resObject.user.pass;
+    //     }
+    //
+    //     res.json(resObject);
+    // });
 
     app.use((err, req, res, next) => {
         console.error(err.stack)

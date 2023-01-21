@@ -8,12 +8,42 @@ const db = new DB();
     await db.productions_list.deleteMany({});
     await db.productions_list.insertMany([
         { title: 'PRODUCTION_FIELD', type: 'FIELD', name: 'field',  stage: 1, basePrice: 1000, placeSize: 0, buildTime: 5,
-            recipes: []
+            recipes: [
+                {
+                    name: 'wheat_seed-wheat',
+                    inputProducts: { 'wheat_seed': 1 },
+                    outputProducts: { 'wheat': 2000 },
+                    cycleDuration: 60,
+                    cost: 260
+                },
+                {
+                    name: 'barley_seed-barley',
+                    inputProducts: { 'barley_seed': 1 },
+                    outputProducts: { 'barley': 2000 },
+                    cycleDuration: 60,
+                    cost: 260
+                },
+                {
+                    name: 'corn_seed-corn',
+                    inputProducts: { 'corn_seed': 1 },
+                    outputProducts: { 'corn': 2000 },
+                    cycleDuration: 60,
+                    cost: 260
+                },
+            ]
         }, // поле
 
         { title: 'PRODUCTION_VINEYARD', type: 'VINEYARD', name: 'vineyard',  stage: 1, basePrice: 2000, placeSize: 0, buildTime: 5,
-            recipes: []
-        }, // винодельня
+            recipes: [
+                {
+                    name: 'bush_isabella-grape_isabella',
+                    inputProducts: { 'bush_isabella': 1 },
+                    outputProducts: { 'grape_isabella': 1500 },
+                    cycleDuration: 60,
+                    cost: 200
+                }
+                ]
+        }, // виноградник
 
         { title: 'PRODUCTION_GARDEN', type: 'GARDEN', name: 'garden',  stage: 1, basePrice: 1300, placeSize: 0, buildTime: 5,
             recipes: []
@@ -29,28 +59,36 @@ const db = new DB();
 
         { title: 'PRODUCTION_MILL', type: 'MILL', name: 'mill',  stage: 2, basePrice: 10000, placeSize: 1, buildTime: 5, recipes: [
                 {
-                    name: 'wheat-flour',
+                    name: 'wheat-wheat_flour',
                     inputProducts: { 'wheat': 100 },
-                    outputProducts: { 'flour': 1 },
+                    outputProducts: { 'wheat_flour': 1 },
                     cycleDuration: 1,
                     cost: 25
                 },{
-                    name: 'barley-flour',
+                    name: 'barley-barley_flour',
                     inputProducts: { 'barley': 100 },
-                    outputProducts: { 'flour': 1 },
+                    outputProducts: { 'barley_flour': 1 },
                     cycleDuration: 1,
                     cost: 25
                 },{
-                    name: 'corn-flour',
+                    name: 'corn-corn_flour',
                     inputProducts: { 'corn': 100 },
-                    outputProducts: { 'flour': 1 },
+                    outputProducts: { 'corn_flour': 1 },
                     cycleDuration: 1,
                     cost: 25
                 },
             ] }, // Мельница
 
         { title: 'PRODUCTION_WINERY', type: 'WINERY', name: 'winery',  stage: 2, basePrice: 23000, placeSize: 3, buildTime: 5,
-            recipes: []
+            recipes: [
+                {
+                    name: 'grape_isabella-sweet_vine',
+                    inputProducts: { 'grape_isabella': 150 },
+                    outputProducts: { 'sweet_vine': 1 },
+                    cycleDuration: 3,
+                    cost: 85
+                }
+            ]
         }, // Винодельня
 
         { title: 'PRODUCTION_WHISKEY_DISTILLERY', type: 'WHISKEY_DISTILLERY', name: 'whiskey_distillery',  stage: 2, basePrice: 35000, placeSize: 3, buildTime: 5,

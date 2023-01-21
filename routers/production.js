@@ -15,7 +15,7 @@ const { messages } = require('../lib/tools');
 //         error: code,
 //     };
 // }
-module.exports = ({ userService, sectorsService, productionListService, productionService, localisation, config }) => {
+module.exports = ({ userService, sectorsService, productionListService, productionService, world, localisation, config }) => {
     router.post('/stop_cycle', async (req, res) => {
         // [sectorId, productionId, recipeId]
         const production = await productionService.getProduction(req.body.productionId);
@@ -46,6 +46,7 @@ module.exports = ({ userService, sectorsService, productionListService, producti
             production.cycles = {};
 
         production.cycles[rec.name] = {
+            cycleDurationInMs: rec.cycleDuration * ((DAY_DURATION * TICK_DURATION) * rec.cycleDuration),
             startCycle: Date.now(),
             ...rec
         };
@@ -64,6 +65,9 @@ module.exports = ({ userService, sectorsService, productionListService, producti
 
         const productionType = await productionListService.findProductionByName(req.body.productionName);
 
+        if (sector.size < productionType.placeSize)
+            return res.json({ status: 'ERROR', message: 'Слишком маленький сектор', error: 300 });
+
         if (req.user.balance < productionType.basePrice)
             return res.json({ status: 'ERROR', message: 'Не достаточно денег', error: 300 });
 
@@ -72,7 +76,8 @@ module.exports = ({ userService, sectorsService, productionListService, producti
             productionName: productionType.name,
             ownerId: req.user._id,
             userId: req.user._id,
-            cycles: {}
+            createdTime: Date.now(),
+            endOfConstruction: Date.now() + productionType.buildTime * world.getTickDuration(),
         };
 
         const newProduction = await productionService.createProduction(prObject);
@@ -81,7 +86,7 @@ module.exports = ({ userService, sectorsService, productionListService, producti
         sector.state = 'BUSY';
         await sector.save();
 
-        res.json({ code: 200 });
+        res.json({ status: 'OK', code: 200 });
     });
 
     return router;

@@ -77,4 +77,16 @@
     transform: scale(1.1);
 }
 
+.element-978y98hjkjh {
+    overflow-y: scroll;
+    max-height: 150px
+}
+/* хром, сафари */
+.element-978y98hjkjh::-webkit-scrollbar { width: 0; }
+
+/* ie 10+ */
+.element-978y98hjkjh { -ms-overflow-style: none; }
+
+/* фф (свойство больше не работает, других способов тоже нет)*/
+.element-978y98hjkjh { overflow: -moz-scrollbars-none; }
 

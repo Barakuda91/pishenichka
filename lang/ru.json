@@ -6,6 +6,8 @@
   "WRONG_PASSWORD": "Не правильный пароль",
   "USER_NOT_FOUND": "Пользователь не найден",
   "WRONG_AUTH_TOKEN": "Ошибка сессии",
+  "NO_AUTH_TOKEN": "Ошибка авторизации",
+
   "PRODUCTION_FIELD":  "Поле",
   "PRODUCTION_VINEYARD": "Виноградник",
   "PRODUCTION_GARDEN":  "Огород",
@@ -21,10 +23,16 @@
   "PRODUCTION_LEATHER_WORKSHOP": "Кожевная мастерская",
   "PRODUCTION_BAKERY": "Хлебзавод",
   "PRODUCTION_WEAVING_WORKSHOP": "Ткацкая мастерская",
+
   "PRODUCTION_BUILD_TITLE": "развертывание нового производства",
   "PRODUCTION_BUILD_TEXT_1": " ",
   "PRODUCTION_EDIT_TITLE": "настройка производства: ",
   "PRODUCTION_EDIT_TEXT_1": " ",
+  "FIELD_EDIT_TITLE": "культивация: ",
+  "FIELD_EDIT_TEXT_1": "На поле можно одновременно выращивать только одну культуру",
+
+  "GRAPE_ISABELLA": "виноград изабелла",
+  "BUSH_ISABELLA": "кусты изабеллы",
   "WHEAT_SEED": "семена пшеницы",
   "WHEAT": "пшеница",
   "BARLEY_SEED": "семена ячменя",
@@ -42,8 +50,12 @@
   "INCOME": "доход",
   "TYPE": "тип",
   "REGISTRY": "реестр",
+  "CITIES": "города",
+  "EXCHANGE": "биржа",
+  "FIELDS": "поля",
   "PRODUCTION": "производства",
   "TRANSPORT": "транспорт",
   "WAREHOUSES": "склады",
-  "SCORE": "магазин"
+  "SCORE": "магазин",
+  "CLOSE": "закрыть"
 }
